@@ -1,0 +1,13 @@
+trust-remote-code: True
+
+model: Forturne/Qwen3-VL-Reranker-2B-FP8
+runner: pooling
+
+max-model-len: -1
+kv-cache-dtype: fp8
+
+gpu-memory-utilization: 0.8
+max-num-seqs: 2
+block-size: 16
+
+port: 8002
