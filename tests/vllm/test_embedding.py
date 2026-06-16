@@ -1,0 +1,61 @@
+from cohere import ClientV2
+from pathlib import Path
+
+from utils import encode_image
+
+MODEL_EMBEDDING = "LifetimeMistake/Qwen3-VL-Embedding-2B-AWQ-4bit"
+URL_EMBEDDING = "http://127.0.0.1:8001"
+
+client_embedding = ClientV2(
+    base_url = URL_EMBEDDING,
+    api_key = 'EMPTY',
+)
+
+try: 
+    client_embedding.models.list()
+    available_service = True
+except:
+    available_service = False
+
+if available_service:
+    def test_embedding_text():
+        text_input = [{
+            'content': [
+                {"type": "text", "text": "Blue flower"},
+            ]
+        }]
+
+        assert _create_embeddings(text_input)
+
+    def test_embedding_image():
+        image = encode_image(Path('flower.jpg'))
+        image_input = [{
+            'content': [
+                {"type": "image_url", "image_url": {"url": image}},
+            ]
+        }]
+
+        assert _create_embeddings(image_input)
+
+    def test_embedding_multi():
+        image = encode_image(Path('flower.jpg'))
+        image_input = [{
+            'content': [
+                {"type": "text", "text": "Blue flower"},
+                {"type": "image_url", "image_url": {"url": image}},
+            ]
+        }]
+
+        assert _create_embeddings(image_input)
+
+def _create_embeddings(inputs):
+    try:
+        response = client_embedding.embed(
+            model = MODEL_EMBEDDING,
+            inputs = inputs,
+            input_type = None,
+        )
+        return True
+    
+    except Exception as e:
+        return False

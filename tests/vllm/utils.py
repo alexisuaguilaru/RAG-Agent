@@ -11,13 +11,13 @@ def encode_image(
 
     if isinstance(image_repr,Path):
         with open(image_repr,'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
+            encoded_string = base64.b64encode(image_file.read()).decode("utf-8")
             extension = image_repr.suffix[1:]
     
     if isinstance(image_repr,Image.Image):
         image_buffer = BytesIO()
         extension = image_repr.format.lower()
         image_repr.save(image_buffer,extension)
-        encoded_string = base64.b64encode(image_buffer.getvalue()).decode('utf-8')
+        encoded_string = base64.b64encode(image_buffer.getvalue()).decode("utf-8")
     
-    return f'data:image/{extension};base64,{encoded_string}'
+    return f"data:image/{extension};base64,{encoded_string}"

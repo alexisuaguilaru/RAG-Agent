@@ -8,7 +8,7 @@ services:
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
-            - ./vllm-configs/dev-vllm-chat.yml:/.config/vllm.yml
+            - ./vllm_configs/dev-vllm-chat.yml:/.config/vllm.yml
 
         ports:
             - "8000:8000"
@@ -34,7 +34,7 @@ services:
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
-            - ./vllm-configs/dev-vllm-embedding.yml:/.config/vllm.yml
+            - ./vllm_configs/dev-vllm-embedding.yml:/.config/vllm.yml
 
         ports:
             - "8001:8001"
@@ -60,7 +60,7 @@ services:
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
-            - ./vllm-configs/dev-vllm-reranker.yml:/.config/vllm.yml
+            - ./vllm_configs/dev-vllm-reranker.yml:/.config/vllm.yml
 
         ports:
             - "8002:8002"
