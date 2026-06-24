@@ -3,7 +3,7 @@ from pathlib import Path
 
 from utils import encode_image
 
-MODEL_EMBEDDING = "LifetimeMistake/Qwen3-VL-Embedding-2B-AWQ-4bit"
+MODEL_EMBEDDING = None
 URL_EMBEDDING = "http://127.0.0.1:8001"
 
 client_embedding = ClientV2(
@@ -12,7 +12,7 @@ client_embedding = ClientV2(
 )
 
 try: 
-    client_embedding.models.list()
+    MODEL_EMBEDDING = client_embedding.models.list().data[0]['id']
     available_service = True
 except:
     available_service = False

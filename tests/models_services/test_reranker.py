@@ -3,7 +3,7 @@ from pathlib import Path
 
 from utils import encode_image
 
-MODEL_RERANKER = "Forturne/Qwen3-VL-Reranker-2B-FP8"
+MODEL_RERANKER = None
 URL_RERANKER = "http://127.0.0.1:8002"
 
 client_reranker = ClientV2(
@@ -12,7 +12,7 @@ client_reranker = ClientV2(
 )
 
 try: 
-    client_reranker.models.list()
+    MODEL_RERANKER = client_reranker.models.list().data[0]['id']
     available_service = True
 except:
     available_service = False

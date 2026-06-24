@@ -3,7 +3,7 @@ from pathlib import Path
 
 from utils import encode_image
 
-MODEL_CHAT = "cyankiwi/Qwen3.5-2B-AWQ-4bit"
+MODEL_CHAT = None
 URL_CHAT = "http://127.0.0.1:8000/v1"
 
 client_chat = OpenAI(
@@ -12,7 +12,7 @@ client_chat = OpenAI(
 )
 
 try: 
-    client_chat.models.list(timeout=0.5)
+    MODEL_CHAT = client_chat.models.list(timeout=0.5).data[0].id
     available_service = True
 except:
     available_service = False
@@ -51,7 +51,7 @@ def _send_messages(messages):
             model = MODEL_CHAT,
             messages = messages,
             temperature = 0.1,
-            max_tokens = 2048,
+            max_tokens = 1024,
             reasoning_effort = "none",
         )
         return True
