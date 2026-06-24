@@ -53,6 +53,9 @@ def _send_messages(messages):
             temperature = 0.1,
             max_tokens = 1024,
             reasoning_effort = "none",
+            extra_body={
+                'chat_template_kwargs': {'enable_thinking': False}
+            },
         )
         return True
     

@@ -1,12 +1,12 @@
 services:
     chat-service:
-        image: ghcr.io/ggml-org/llama.cpp:server-cuda
+        image: ghcr.io/ggml-org/llama.cpp:server
         container_name: chat-service
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
             - HF_HOME=/models/.cache
-            - OMP_NUM_THREADS=4
+            - OMP_NUM_THREADS=8
 
         volumes:
             - ~/.cache/llama-cpp:/models
@@ -14,24 +14,18 @@ services:
         ports:
             - "8000:8000"
 
-        deploy:
-            resources:
-                reservations:
-                    devices:
-                        - driver: nvidia
-                          count: all
-                          capabilities: [ gpu ]
-
         command: >
-            --hf-repo ggml-org/gemma-4-E4B-it-GGUF
-            --hf-file gemma-4-E4B-it-Q4_K_M.gguf
+            --hf-repo unsloth/Qwen3.5-4B-MTP-GGUF
+            --hf-file Qwen3.5-4B-Q4_K_M.gguf
             -c 8192
             -b 2048
             -ub 2048
             --tools all
-            -ngl 99
+            -ngl 0
+            -t 8
             --port 8000
             --host 0.0.0.0
+            --no-webui
 
     embedding-service:
         image: vllm/vllm-openai
