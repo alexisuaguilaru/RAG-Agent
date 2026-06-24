@@ -9,7 +9,7 @@ kv-cache-dtype: fp8
 kv-offloading-size: 1
 enable-prefix-caching: False
 
-gpu-memory-utilization: 0.4
+gpu-memory-utilization: 0.33
 cpu-offload-gb: 1
 max-num-seqs: 1
 block-size: 16

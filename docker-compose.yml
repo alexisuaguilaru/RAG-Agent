@@ -28,6 +28,13 @@ services:
         image: vllm/vllm-openai
         container_name: vllm-embedding
 
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+
         environment:
             - HF_TOKEN=${HF_TOKEN}
 
@@ -52,6 +59,10 @@ services:
     vllm-reranker:
         image: vllm/vllm-openai
         container_name: vllm-reranker
+
+        depends_on:
+            vllm-embedding:
+                condition: service_healthy
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
