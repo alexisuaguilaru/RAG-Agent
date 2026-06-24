@@ -3,6 +3,10 @@ services:
         image: ghcr.io/ggml-org/llama.cpp:server
         container_name: chat-service
 
+        depends_on:
+            reranker-service:
+                condition: service_healthy
+
         environment:
             - HF_TOKEN=${HF_TOKEN}
             - HF_HOME=/models/.cache
@@ -15,8 +19,8 @@ services:
             - "8000:8000"
 
         command: >
-            --hf-repo unsloth/Qwen3.5-4B-MTP-GGUF
-            --hf-file Qwen3.5-4B-Q4_K_M.gguf
+            --hf-repo unsloth/Qwen3.5-2B-MTP-GGUF
+            --hf-file Qwen3.5-2B-UD-Q8_K_XL.gguf
             -c 8192
             -b 2048
             -ub 2048
@@ -25,7 +29,7 @@ services:
             -t 8
             --port 8000
             --host 0.0.0.0
-            --no-webui
+            --no-ui
 
     embedding-service:
         image: vllm/vllm-openai
@@ -40,6 +44,7 @@ services:
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
+            # - HF_HUB_OFFLINE=1
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
@@ -63,12 +68,20 @@ services:
         image: vllm/vllm-openai
         container_name: reranker-service
 
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -f http://localhost:8002/health || exit 1" ]
+            interval: 10s
+            timeout: 5s
+            retries: 20
+            start_period: 10s
+
         depends_on:
             embedding-service:
                 condition: service_healthy
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
+            # - HF_HUB_OFFLINE=1
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
