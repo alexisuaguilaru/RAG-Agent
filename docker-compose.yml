@@ -1,7 +1,7 @@
 services:
-    vllm-chat:
+    chat-service:
         image: vllm/vllm-openai
-        container_name: vllm-chat
+        container_name: chat-service
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
@@ -24,12 +24,12 @@ services:
         command: >
             --config /.config/vllm.yml
 
-    vllm-embedding:
+    embedding-service:
         image: vllm/vllm-openai
-        container_name: vllm-embedding
+        container_name: embedding-service
 
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+            test: [ "CMD-SHELL", "curl -f http://localhost:8001/health || exit 1" ]
             interval: 10s
             timeout: 5s
             retries: 20
@@ -56,12 +56,12 @@ services:
         command: >
             --config /.config/vllm.yml
 
-    vllm-reranker:
+    reranker-service:
         image: vllm/vllm-openai
-        container_name: vllm-reranker
+        container_name: reranker-service
 
         depends_on:
-            vllm-embedding:
+            embedding-service:
                 condition: service_healthy
 
         environment:
