@@ -1,7 +1,88 @@
 services:
+    aegra-service:
+        build:
+            context: ./agent
+            dockerfile: ./agent/Dockerfile
+        container_name: aegra-service
+
+        healthcheck:
+            test: ["CMD-SHELL", "curl -sf http://localhost:${PORT:-2026}/health || exit 1"]
+            interval: 10s
+            timeout: 10s
+            retries: 5
+
+        depends_on:
+            chat-service:
+                condition: service_healthy
+            postgres-db:
+                condition: service_healthy
+            redis-db:
+                condition: service_healthy
+
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER:-postgres}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_password}
+            - POSTGRES_HOST=postgres-db
+            - POSTGRES_DB=agent_db
+            - AEGRA_CONFIG=aegra.json
+            - AUTH_TYPE=${AUTH_TYPE:-noop}
+            - PORT=2026
+            - REDIS_BROKER_ENABLED=true
+            - REDIS_URL=redis://redis-db:6379/0
+
+        volumes:
+            - ./agent/src:/app/src:ro
+            - ./agent/aegra.json:/app/aegra.json:ro
+        
+        ports:
+            - "2026:2026"
+
+    postgres-db:
+        image: pgvector/pgvector:pg17
+        container_name: postgres-db
+
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+            interval: 5s
+            timeout: 3s
+            retries: 5
+        
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER:-postgres}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres_password}
+            - POSTGRES_DB=agent_db
+        
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+        ports:
+            - "5432:5432"
+
+    redis-db:
+        image: redis:8.8-alpine
+        container_name: redis-db
+
+        healthcheck:
+            test: redis-cli ping
+            interval: 5s
+            timeout: 3s
+            retries: 5
+
+        volumes:
+            - redis_data:/data
+
+        ports:
+            - "6379:6379"
+
     chat-service:
         image: ghcr.io/ggml-org/llama.cpp:server
         container_name: chat-service
+
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
         depends_on:
             reranker-service:
@@ -100,3 +181,7 @@ services:
 
         command: >
             --config /.config/vllm.yml
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,5 +1,6 @@
-from openai import OpenAI
 from pathlib import Path
+
+from openai import OpenAI
 
 from utils import encode_image
 
@@ -8,7 +9,7 @@ URL_CHAT = "http://127.0.0.1:8000/v1"
 
 client_chat = OpenAI(
     base_url = URL_CHAT,
-    api_key = 'EMPTY',
+    api_key = "EMPTY",
 )
 
 try: 
@@ -52,9 +53,8 @@ def _send_messages(messages):
             messages = messages,
             temperature = 0.1,
             max_tokens = 1024,
-            reasoning_effort = "none",
-            extra_body={
-                'chat_template_kwargs': {'enable_thinking': False}
+            extra_body = {
+                "chat_template_kwargs": {"enable_thinking": False}
             },
         )
         return True

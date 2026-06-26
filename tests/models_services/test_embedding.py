@@ -1,5 +1,6 @@
-from cohere import ClientV2
 from pathlib import Path
+
+from cohere import ClientV2
 
 from utils import encode_image
 
@@ -8,7 +9,7 @@ URL_EMBEDDING = "http://127.0.0.1:8001"
 
 client_embedding = ClientV2(
     base_url = URL_EMBEDDING,
-    api_key = 'EMPTY',
+    api_key = "EMPTY",
 )
 
 try: 
