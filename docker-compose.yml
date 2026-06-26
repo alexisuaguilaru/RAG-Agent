@@ -2,7 +2,7 @@ services:
     aegra-service:
         build:
             context: ./agent
-            dockerfile: ./agent/Dockerfile
+            dockerfile: Dockerfile
         container_name: aegra-service
 
         healthcheck:
@@ -79,7 +79,7 @@ services:
         container_name: chat-service
 
         healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+            test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
             interval: 5s
             timeout: 5s
             retries: 5
