@@ -49,6 +49,21 @@ flowchart RL
 * Aegra provides an agent serving compatible with the LangGraph SDK (agent protocol).
 * Open to add new tools to expand the agent harness.
 
+### Tech Stack
+* [Aegra](https://github.com/aegra/aegra): Drop-in replacement for LangSmith Deployments serving the RAG agent using the Agent Protocol.
+* [LangChain](https://github.com/langchain-ai/langchain): AI framework for building agents.
+* [vLLM](https://github.com/vllm-project/vllm): Production, concurrent LLM inference and serving.
+* [llama.cpp](https://github.com/ggml-org/llama.cpp): Local LLM inference.
+* [FastAPI](https://github.com/fastapi/fastapi): Framework for building APIs
+* [Redis](https://github.com/redis/redis)
+* [Postgres](https://github.com/postgres/postgres)
+* [ChromaDB](https://github.com/chroma-core/chroma)
+
+## Environment
+Currently, this project is testing with the next resources:
+* 16GB DDR5 RAM
+* 6GB GDDR5 VRAM
+
 ## Installation &  Usage
 ### Local Development Stage
 ```bash
