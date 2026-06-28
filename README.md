@@ -1,7 +1,5 @@
 # RAG Agent
-A multimodal RAG agent build on LangChain technologies and local, self-host models.
-
-Agent built as part of my Bachelor's thesis for [Data Science degree](https://www.enesmorelia.unam.mx/licenciaturas/tecnologias-para-la-informacion-en-ciencias/) in [ENES Unidad Morelia](https://www.enesmorelia.unam.mx/).
+An initial solution to develop a multimodal RAG agent build on LangChain ecosystem using local, no closed models. This system provides an API for the RAG and agent compatible with the LangGraph SDK.
 
 ## Architecture
 ```mermaid
@@ -30,11 +28,13 @@ flowchart RL
        aegra_api([Entrypoint])
        langchain_agent[Agent]
        agent_tools[[Tools]]
+       chat_model[[Chat Model]]
 
        aegra_api -- service --> langchain_agent
        aegra_api -- query threads --> sql_db
        langchain_agent -. query messages .-> sql_db
        langchain_agent -- tool callings --> agent_tools
+       langchain_agent -- chat --> chat_model
 
        agent_tools -- request --> rag_api
     end
@@ -44,14 +44,19 @@ flowchart RL
 
     sql_db[(Postgres)]
 ```
+* Both embedding and reranker models are served with vLLM running on GPU, and chat model is served with llama-cpp running on CPU. 
+* Both RAG and agent are developed with Python LangChain.
+* Aegra provides an agent serving compatible with the LangGraph SDK (agent protocol).
+* Open to add new tools to expand the agent harness.
 
-## Installation
+## Installation &  Usage
+### Local Development Stage
 ```bash
 pip install uv
 uv pip install -r requirements.txt
 ```
 
-## Usage 
+### Testing and Deployment Stage
 ```bash
 cp .env.example .env
 ```
@@ -61,8 +66,12 @@ set `HF_TOKEN`
 docker compose up
 ```
 
-## Testing
-Each folder contains unit tests of each service and component
+## Run Tests
 ```bash
 pytest tests
 ```
+
+## Author, Affiliation and Contact
+Alexis Aguilar [Student of Bachelor's Degree in "Tecnologías para la Información en Ciencias" at Universidad Nacional Autónoma de México [UNAM](https://www.unam.mx/)]: alexis.uaguilaru@gmail.com
+
+Project developed as component for my Bachelor's thesis: "Desarrollo de un Agente de Inteligencia Artificial para Optimizar el Trámite de Titulación para los Estudiantes de la ENES Unidad Morelia"
