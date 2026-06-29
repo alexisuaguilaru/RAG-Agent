@@ -24,11 +24,7 @@ async def embed_files(
         HTTP 415: File format incompatible or unsupported
         HTTP 500: Internal fail to process input files
     """
-
-    # process description based on file --> list of contents block
-
-    # embed content blocks into vector_store + tags
-
+    
     try:
         content_blocks = await file_processor_dispatch(file)
     except:
@@ -40,7 +36,7 @@ async def embed_files(
     content_blocks = get_formatted_content_blocks(content_blocks, description)
 
     try:
-        embed_content(content_blocks)
+        embed_content(content_blocks, tags)
     except Exception as e:
         return JSONResponse(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
