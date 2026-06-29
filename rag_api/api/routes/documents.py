@@ -4,6 +4,7 @@ from fastapi import APIRouter, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 
 from rag_api.processors.file_processor import file_processor_dispatch
+from rag_api.processors.content_processor import get_formatted_content_blocks
 from rag_api.services.embedding import embed_content
 
 router = APIRouter()
@@ -21,6 +22,7 @@ async def embed_files(
     Returns:
         HTTP 200: Content file embedded correctly
         HTTP 415: File format incompatible or unsupported
+        HTTP 500: Internal fail to process input files
     """
 
     # process description based on file --> list of contents block
@@ -35,6 +37,8 @@ async def embed_files(
             content = {"message": "File format not supported."}
         )
     
+    content_blocks = get_formatted_content_blocks(content_blocks, description)
+
     try:
         embed_content(content_blocks)
     except Exception as e:
