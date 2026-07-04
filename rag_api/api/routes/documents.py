@@ -3,30 +3,41 @@ from typing import Annotated, List
 from fastapi import APIRouter, File, Form, UploadFile, status
 from fastapi.responses import JSONResponse
 
-from rag_api.processors.file_processor import file_processor_dispatch
+from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
 from rag_api.services.embedding import embed_content
 
 router = APIRouter()
 
-@router.post("/create-embed")
+@router.post(
+    "/create-embed",
+    description = "Generate the file's embeddings and load it into the vector store with their tags."
+)
 async def embed_files(
         file: Annotated[UploadFile, File()],
-        tags: Annotated[List[str], Form()] = [],
         description: Annotated[str, Form()] =  "",
-    ):
+        tags: Annotated[List[str], Form()] = [],
+    ) -> JSONResponse:
     """
+    Embed the content of text files and every page of a PDF file is embedded like an image. 
+    The texts and images are fused with the provided description. And the tags are passed 
+    to the vector store as file's metadata.
+
     Args:
-        file: md, txt, jpg, png, pdf formats
+        file (UploadFile): Expected a file with the formats of md, txt, jpg, png and pdf
+        description (srt): Brief description or caption about the file
+        tags (List[str]): Tags associated with the file's content
 
     Returns:
-        HTTP 200: Content file embedded correctly
-        HTTP 415: File format incompatible or unsupported
-        HTTP 500: Internal fail to process input files
+        JSONResponse[200]: Content file embedded correctly
+        
+    Raises:
+        JSONResponse[415]: File format is incompatible or unsupported
+        JSONResponse[500]: Internal fail to process input file
     """
     
     try:
-        content_blocks = await file_processor_dispatch(file)
+        content_blocks = await file_processor(file)
     except:
         return JSONResponse(
             status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
@@ -36,7 +47,7 @@ async def embed_files(
     content_blocks = get_formatted_content_blocks(content_blocks, description)
 
     try:
-        embed_content(content_blocks, tags)
+        await embed_content(content_blocks, tags)
     except Exception as e:
         return JSONResponse(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,

@@ -6,6 +6,10 @@ from cohere import ClientV2
 from rag_api.core.config import settings
 
 class EmbeddingModel(Embeddings):
+    """
+    Multimodal embedding interface compatible with LangChain's ecosystem.
+    """
+
     def __init__(self):
         self._client_embedding = ClientV2(
             base_url = settings.EMBEDDING_SERVICE_URL,
@@ -41,6 +45,3 @@ class EmbeddingModel(Embeddings):
         )
 
         return embed_response.embeddings.float_[0]
-
-
-from langchain_core.vectorstores import VectorStore

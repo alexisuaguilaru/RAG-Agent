@@ -6,7 +6,23 @@ from pdf2image import convert_from_bytes
 
 from fastapi import UploadFile
 
-async def file_processor_dispatch(file: UploadFile) -> List[Dict[str, Any]]:
+async def file_processor(file: UploadFile) -> List[Dict[str, Any]]:
+    """
+    Create the content blocks based on the file's content type. 
+    These content blocks follow the OpenAPI LangChain Extension format.
+
+    The PDF files return a list of image content blocks.
+
+    Args:
+        file (UploadFile): File whose content will be processed to create a list of content blocks
+
+    Returns:
+        content_blocks (List[Dict[str, Any]]): List of formatted content blocks created with the file's content
+
+    Raises:
+        Exception (File format without processor): Not exists a valid processor for the file's content type
+    """
+
     content_type = file.content_type
 
     if content_type in _CONTENT_TYPE_DISPATCH:
