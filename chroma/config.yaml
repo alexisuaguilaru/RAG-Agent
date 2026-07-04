@@ -1,0 +1,4 @@
+persist_path: "/data"
+port: 7890
+listen_address: "0.0.0.0"
+max_payload_size_bytes: 104857600

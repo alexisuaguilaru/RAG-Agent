@@ -1,3 +1,5 @@
+name: rag-agent
+
 services:
     aegra-service:
         build:
@@ -74,6 +76,32 @@ services:
         ports:
             - "6379:6379"
 
+    chroma-db:
+        build:
+            context: ./chroma
+            dockerfile: Dockerfile
+        container_name: chroma-db
+
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:7890/api/v2/heartbeat"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+        environment:
+            IS_PERSISTENT: TRUE
+            ANONYMITY_OUT_OF_SET: TRUE
+            CHROMA_SERVER_AUTH_PROVIDER: "chromadb.auth.token.TokenAuthServerProvider"
+            CHROMA_SERVER_AUTH_CREDENTIALS: ${TOKEN_CHROMA}
+            CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER: "X-Chroma-Token"
+        
+        volumes:
+            - chroma_data:/data
+            - ./chroma/config.yaml:/config.yaml
+
+        ports:
+            - "7890:7890"
+
     chat-service:
         image: ghcr.io/ggml-org/llama.cpp:server
         container_name: chat-service
@@ -85,6 +113,8 @@ services:
             retries: 5
 
         depends_on:
+            embedding-service:
+                condition: service_healthy
             reranker-service:
                 condition: service_healthy
 
@@ -125,7 +155,7 @@ services:
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
-            # - HF_HUB_OFFLINE=1
+            - HF_HUB_OFFLINE=1
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
@@ -162,7 +192,7 @@ services:
 
         environment:
             - HF_TOKEN=${HF_TOKEN}
-            # - HF_HUB_OFFLINE=1
+            - HF_HUB_OFFLINE=1
 
         volumes:
             - ~/.cache/huggingface:/root/.cache/huggingface
@@ -185,3 +215,4 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  chroma_data:
