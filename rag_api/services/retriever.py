@@ -1,4 +1,7 @@
+from langchain_classic.retrievers import ContextualCompressionRetriever
+
 from rag_api.database.vector_store import get_vector_store
+from rag_api.models.reranker import RerankerModel
 from rag_api.core.config import settings
 
 vector_store = get_vector_store()
@@ -12,4 +15,9 @@ def get_retriever():
         k = settings.DOCUMENTS_TO_RETRIEVE,
     )
 
-    return retriever
+    contextual_retriever = ContextualCompressionRetriever(
+        base_retriever = retriever,
+        base_compressor = RerankerModel(),
+    )
+
+    return contextual_retriever
