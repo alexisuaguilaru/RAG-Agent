@@ -10,6 +10,7 @@ from rag_api.core.config import settings
 
 class RerankerModel(BaseDocumentCompressor):
     """
+    Multimodal reranker interface compatible with LangChain's ecosystem.
     """
     
     def __init__(self):

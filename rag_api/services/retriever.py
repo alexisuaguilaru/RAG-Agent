@@ -6,8 +6,15 @@ from rag_api.core.config import settings
 
 vector_store = get_vector_store()
 
-def get_retriever():
+def get_retriever() -> ContextualCompressionRetriever:
     """
+    Function to get the LangChain document retriever 
+    interface based on the initialized vector store 
+    as retriever and reranker model to compress the 
+    retrieved documents.
+
+    Returns:
+        contextual_retriever (ContextualCompressionRetriever): Contextual retriever with the vector store as retriever and reranker to compress the documents
     """
 
     retriever = vector_store.as_retriever(
