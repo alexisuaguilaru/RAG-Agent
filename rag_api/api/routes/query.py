@@ -1,6 +1,7 @@
+import json
 from typing import List
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
 
@@ -27,6 +28,12 @@ async def search_documents(
 
     Returns:
         documents (List[Document]): List of relevant documents ordered by relevance to resolve the user's query
+
+    Raises:
+        exception_document (List[Document]): One document just with text content clarifying that there was a internal server issue
     """
 
-    return await retrieve_documents(query)
+    try:
+        return await retrieve_documents(query)
+    except Exception as e:
+        return [Document(json.dumps([{"type": "text", "text": "Internal fail to retrieve documents."}]))]

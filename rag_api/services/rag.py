@@ -15,6 +15,12 @@ async def retrieve_documents(query: str) -> List[Document]:
 
     Args: 
         query (str): User's query to retrieve the relevant documents
+
+    Raises:
+        Exception (Internal server to resolve query): Retriever does not work correctly
     """
     
-    return await retriever.ainvoke(query)
+    try:
+        return await retriever.ainvoke(query)
+    except Exception as e:
+        raise Exception("Internal server to resolve query")
