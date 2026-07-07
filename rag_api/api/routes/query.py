@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from langchain_core.documents import Document
 
+from rag_api.schemas.requests import QuerySearchDocuments
 from rag_api.services.rag import retrieve_documents
 
 router = APIRouter()
@@ -14,7 +15,7 @@ router = APIRouter()
     description = "Search similar documents and files based on the user's query",
 )
 async def search_documents(
-        query: str,
+        search_query: QuerySearchDocuments,
     ) -> List[Document]:
     """
     Search and retrieve relevant documents and files in the vector 
@@ -24,7 +25,7 @@ async def search_documents(
     before invoke the contextual retriever.
 
     Args:
-        query (str): Query to resolve provided by the user
+        search_query (QuerySearchDocuments): Payload with the query to resolve provided by the user
 
     Returns:
         documents (List[Document]): List of relevant documents ordered by relevance to resolve the user's query
@@ -34,6 +35,6 @@ async def search_documents(
     """
 
     try:
-        return await retrieve_documents(query)
+        return await retrieve_documents(search_query.query)
     except Exception as e:
         return [Document(json.dumps([{"type": "text", "text": "Internal fail to retrieve documents."}]))]
