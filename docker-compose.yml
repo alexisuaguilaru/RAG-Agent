@@ -76,6 +76,31 @@ services:
         ports:
             - "6379:6379"
 
+    rag-api:
+        build:
+            context: ./rag_api
+            dockerfile: Dockerfile
+        container_name: rag-api
+
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:6060/health"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+        depends_on:
+            chat-service:
+                condition: service_healthy
+
+        environment:
+            EMBEDDING_SERVICE_URL: "http://embedding-service:8001"
+            RERANKER_SERVICE_URL: "http://reranker-service:8002"
+            CHROMA_HOST: "chroma-db"
+            CHROMA_TOKEN: ${TOKEN_CHROMA}
+
+        ports:
+            - "6060:6060"
+
     chroma-db:
         build:
             context: ./chroma
