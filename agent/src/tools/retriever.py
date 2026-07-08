@@ -33,6 +33,11 @@ def retriever_rag_tool(query: str) -> List[Dict]:
         return [{"type": "text", "text": "Tool failed. No available."}]
 
 def _process_documents(documents: List[List[ContentBlock]]) -> List[Dict]:
+    """
+    Function to unpack documents' content blocks and standardize 
+    the format of each content block.
+    """
+
     content_blocks = []
     for document in documents:
         for content in document:

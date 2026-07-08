@@ -1,5 +1,5 @@
 ## Agent 
-Follow the template provided by Aegra commands, this folder contains the source code to init and serve the agent in a production environment. The code is modularized to divide responsibilities and components.
+Based on the template provided by Aegra commands, this folder contains the source code to init and serve the agent in a production environment. The code is modularized to divide responsibilities and components.
 
 ### Add New Tools
 1. Create a new Python file for your tool source code in [tools](./src/tools/)

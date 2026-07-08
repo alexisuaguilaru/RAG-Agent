@@ -1,2 +1,2 @@
-# vLLM Configuration Files
-Each file in this folder contains the basic configuration is using to develop the rag agent in local, dev stage with a constraint on computer resources.
+## vLLM Configuration Files
+Each file in this folder contains the basic configuration is using to develop the rag agent in local, dev stage with a constraint on computer resources (16GB RAM + 6GB VRAM).
