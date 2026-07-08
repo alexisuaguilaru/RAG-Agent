@@ -1,5 +1,5 @@
 # RAG Agent
-An initial solution to develop a multimodal RAG agent build on LangChain ecosystem using local, no closed models. This system provides an API for the RAG and agent compatible with the LangGraph SDK.
+An initial solution to develop a multimodal RAG agent build on LangChain ecosystem using local, open-weights models. This system provides an API for the RAG and agent compatible with the LangGraph SDK.
 
 ## Architecture
 ```mermaid
@@ -47,9 +47,9 @@ flowchart RL
 * Both embedding and reranker models are served with vLLM running on GPU, and chat model is served with llama-cpp running on CPU. 
 * Both RAG and agent are developed with Python LangChain.
 * Aegra provides an agent serving compatible with the LangGraph SDK (agent protocol).
-* Open to add new tools to expand the agent harness.
 
 ### Tech Stack
+Every folder (except for `tests`) has a README file which brief explains the purpose of the source code contained in the folders and some steps to modify/custom the code.
 * [Aegra](https://github.com/aegra/aegra): Drop-in replacement for LangSmith Deployments serving the RAG agent using the Agent Protocol.
 * [LangChain](https://github.com/langchain-ai/langchain): AI framework for building agents.
 * [vLLM](https://github.com/vllm-project/vllm): Production, concurrent LLM inference and serving.
@@ -62,7 +62,7 @@ flowchart RL
 ## Environment
 Currently, this project is testing with the next resources:
 * 16GB DDR5 RAM
-* 6GB GDDR5 VRAM
+* 6GB GDDR6 VRAM
 
 ## Installation &  Usage
 ### Local Development Stage
@@ -81,6 +81,9 @@ set `HF_TOKEN`
 docker compose up
 ```
 
+### Web Interface
+This project do not have an UI to interact with the RAG agent, but you can use [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
+
 ## Run Tests
 ```bash
 pytest tests
@@ -89,4 +92,7 @@ pytest tests
 ## Author, Affiliation and Contact
 Alexis Aguilar [Student of Bachelor's Degree in "Tecnologías para la Información en Ciencias" at Universidad Nacional Autónoma de México [UNAM](https://www.unam.mx/)]: alexis.uaguilaru@gmail.com
 
-Project developed as component for my Bachelor's thesis: "Desarrollo de un Agente de Inteligencia Artificial para Optimizar el Trámite de Titulación para los Estudiantes de la ENES Unidad Morelia"
+Project developed as component for my Bachelor's thesis: "Desarrollo de un Agente de Inteligencia Artificial para Optimizar el Trámite de Titulación para los Estudiantes de la [ENES Unidad Morelia](https://www.enesmorelia.unam.mx/)".
+
+## License
+Project under [MIT License](LICENSE)

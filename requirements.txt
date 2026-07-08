@@ -16,5 +16,3 @@ langgraph-sdk >= 0.4.2
 
 fastapi[standard] >= 0.138.1
 python-multipart >= 0.0.32
-
-pillow >= 12.2.0
