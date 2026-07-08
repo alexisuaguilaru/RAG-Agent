@@ -1,6 +1,8 @@
-from dataclasses import dataclass
 from typing import Optional
 
-@dataclass
-class ContextSchema:
-    keyword: Optional[str]
+from pydantic import BaseModel , Field
+
+class ContextSchema(BaseModel):
+    keyword: Optional[str] = Field(
+        default = ""
+    )

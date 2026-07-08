@@ -1,7 +1,5 @@
-from .multiply import multiply_tool
-from .add import add_tool
+from .retriever import retriever_rag_tool
 
 TOOLS = [
-    multiply_tool,
-    add_tool,
+    retriever_rag_tool,
 ]

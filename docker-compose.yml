@@ -16,6 +16,8 @@ services:
         depends_on:
             chat-service:
                 condition: service_healthy
+            rag-api:
+                condition: service_healthy
             postgres-db:
                 condition: service_healthy
             redis-db:
@@ -157,7 +159,7 @@ services:
         command: >
             --hf-repo unsloth/Qwen3.5-2B-MTP-GGUF
             --hf-file Qwen3.5-2B-UD-Q8_K_XL.gguf
-            -c 8192
+            -c 0
             -b 2048
             -ub 2048
             --tools all
