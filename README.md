@@ -121,7 +121,7 @@ To execute the basic, initial tests, use the next command:
 pytest tests
 ```
 
-## Author, Affiliation and Contact
+## Author, Affiliation & Contact
 Alexis Aguilar [Student of Bachelor's Degree in "Tecnologías para la Información en Ciencias" at Universidad Nacional Autónoma de México [UNAM](https://www.unam.mx/)]: alexis.uaguilaru@gmail.com
 
 Project developed as component for my Bachelor's thesis: "Desarrollo de un Agente de Inteligencia Artificial para Optimizar el Trámite de Titulación para los Estudiantes de la [ENES Unidad Morelia](https://www.enesmorelia.unam.mx/)".
