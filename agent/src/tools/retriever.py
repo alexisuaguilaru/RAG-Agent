@@ -40,9 +40,9 @@ def _process_documents(documents: List[List[ContentBlock]]) -> List[Dict]:
 
     content_blocks = []
     for document in documents:
-        for content in document:
-            if content["type"] == "text":
-                content_blocks.append(content)
-            elif content["type"] == "image_url":
-                content_blocks.append({"type": "image", "url": content["image_url"]["url"]})
+        content = document[0]
+        if content["type"] == "text":
+            content_blocks.append(content)
+        elif content["type"] == "image_url":
+            content_blocks.append({"type": "image", "url": content["image_url"]["url"]})
     return content_blocks
