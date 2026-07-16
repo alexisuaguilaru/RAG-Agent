@@ -48,10 +48,21 @@ async def embed_content(
         list_embeddings_ids.extend(embeddings_ids)
 
     if len(list_embeddings_ids) != len(content_blocks): 
-        vector_store.delete(list_embeddings_ids)
+        await vector_store.adelete(list_embeddings_ids)
         raise Exception("Dismatch between number of content_blocks and embeddings_ids")
     
     return list_embeddings_ids
+
+async def delete_embeddings(
+        embedding_ids: List[str],
+    ):
+    """
+    """
+
+    try:
+       await vector_store.adelete(embedding_ids) 
+    except:
+        raise Exception("Not exists the given IDs")
 
 async def _generate_embeddings(
         content_inputs: List[List[Dict[str, Any]]],

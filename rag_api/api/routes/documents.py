@@ -1,10 +1,12 @@
 from typing import Annotated, List
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
+from fastapi.responses import JSONResponse
 
+from rag_api.schemas.requests import DeleteFileEmbeddings
 from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
-from rag_api.services.embedding import embed_content
+from rag_api.services.embedding import embed_content, delete_embeddings
 
 router = APIRouter()
 
@@ -54,3 +56,25 @@ async def embed_files(
         )
     
     return embedding_ids
+
+@router.delete(
+    "/delete-embed",
+    description = "Delete the file's embeddings"
+)
+async def delete_embed(
+        file_embeddings: DeleteFileEmbeddings,
+    ):
+    """
+    """
+
+    try:
+        await delete_embeddings(file_embeddings.embedding_ids)
+        return JSONResponse(
+            status_code = status.HTTP_200_OK,
+            content = {"detail": "File's embeddings deleted"},
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "Embedding IDs not found",
+        )
