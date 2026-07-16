@@ -28,7 +28,6 @@ async def file_processor(file: UploadFile) -> List[Dict[str, Any]]:
     if content_type in _CONTENT_TYPE_DISPATCH:
         return await _CONTENT_TYPE_DISPATCH[content_type](file)
     else:
-        print([{"content type": content_type}])
         raise Exception("file format without processor")
 
 async def _text_processor(file: UploadFile) -> List[Dict[str, Any]]:

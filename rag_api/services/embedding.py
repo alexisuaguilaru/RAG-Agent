@@ -11,7 +11,7 @@ vector_store = get_vector_store()
 async def embed_content(
         content_blocks: List[List[Dict[str, Any]]],
         tags: List[str],
-    ):
+    ) -> List[str]:
     """
     Function to embed the content blocks based on 
     the uploaded file. The embedding process is 
@@ -22,6 +22,9 @@ async def embed_content(
     Args:
         content_blocks (List[List[Dict[str, Any]]]): Formatted list of content blocks based on the given file
         tags (List[str]): Tags associated to the uploaded file
+
+    Returns:
+        list_embeddings_ids (List[str]): List of IDs of every embedding vector created
 
     Raises:
         Exception (Content not JSON serializable): The content blocks do not have the expected JSON format
@@ -47,6 +50,8 @@ async def embed_content(
     if len(list_embeddings_ids) != len(content_blocks): 
         vector_store.delete(list_embeddings_ids)
         raise Exception("Dismatch between number of content_blocks and embeddings_ids")
+    
+    return list_embeddings_ids
 
 async def _generate_embeddings(
         content_inputs: List[List[Dict[str, Any]]],
