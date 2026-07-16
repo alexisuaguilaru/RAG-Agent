@@ -3,7 +3,7 @@ from typing import Annotated, List
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from rag_api.schemas.requests import DeleteFileEmbeddings
+from rag_api.schemas.requests import DeleteFilesEmbeddings
 from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
 from rag_api.services.embedding import embed_content, delete_embeddings
@@ -62,16 +62,29 @@ async def embed_files(
     description = "Delete the file's embeddings"
 )
 async def delete_embed(
-        file_embeddings: DeleteFileEmbeddings,
+        files_embeddings: DeleteFilesEmbeddings,
     ):
     """
+    Delete a list of stored embeddings from the database 
+    based on theirs IDs. The deletion operation fails 
+    when the IDs not exist in the database. The IDs 
+    can be associated to different files.
+
+    Args:
+        files_embeddings (DeleteFileEmbeddings): Payload with the list of embedding IDs to delete
+
+    Returns:
+        JSONResponse[200]: Deletion of embedding IDs was done successfully
+        
+    Raises:
+        HTTPException[404]: Some of the embedding IDs were not found in the database
     """
 
     try:
-        await delete_embeddings(file_embeddings.embedding_ids)
+        await delete_embeddings(files_embeddings.embedding_ids)
         return JSONResponse(
             status_code = status.HTTP_200_OK,
-            content = {"detail": "File's embeddings deleted"},
+            content = {"detail": "Files' embeddings deleted"},
         )
     except Exception as e:
         raise HTTPException(

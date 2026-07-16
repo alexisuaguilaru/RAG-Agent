@@ -57,6 +57,14 @@ async def delete_embeddings(
         embedding_ids: List[str],
     ):
     """
+    Function to delete a list of embeddings based 
+    on theirs IDs from the vector database.
+
+    Args:
+        embedding_ids: List[str]: List of embedding IDs to delete
+
+    Raises:
+        Exception (Not exists the given IDs): The IDs were not found in the database
     """
 
     try:

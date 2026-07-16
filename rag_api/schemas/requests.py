@@ -2,11 +2,12 @@ from typing import List
 
 from pydantic import BaseModel
 
-class DeleteFileEmbeddings(BaseModel):
+class DeleteFilesEmbeddings(BaseModel):
     """
     Class for formatting the request's payload for 
     /documents/delete-embed endpoint. This class 
-    stores a list of embedding IDs to delete
+    stores a list of embedding IDs to delete which 
+    can belong to different files
     """
 
     embedding_ids: List[str]
