@@ -56,6 +56,9 @@ export async function POST(req: NextRequest) {
           let lastSeenText = "";
 
           for await (const chunk of runStream) {
+            if (req.signal.aborted) {
+              break;
+            }
             // Only handle partial message streaming events
             if (chunk.event === "messages/partial" || (chunk as any).event === "messages") {
               const data = chunk.data as any;

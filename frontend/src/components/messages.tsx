@@ -7,10 +7,15 @@ import { Loader2 } from "lucide-react";
 interface MessagesProps {
   messages: Array<MessageProps>;
   isLoading: boolean;
+  onRegenerate?: (index: number) => void;
+  onEditMessage?: (index: number, newContent: string) => void;
 }
 
-export function Messages({ messages, isLoading }: MessagesProps) {
+export function Messages({ messages, isLoading, onRegenerate, onEditMessage }: MessagesProps) {
   const [containerRef, endRef] = useScrollToBottom<HTMLDivElement>();
+
+  const lastAssistantIndex = messages.findLastIndex((m) => m.role === "assistant");
+  const lastUserIndex = messages.findLastIndex((m) => m.role === "user");
 
   return (
     <div
@@ -23,6 +28,19 @@ export function Messages({ messages, isLoading }: MessagesProps) {
             key={`${message.role}-${index}`}
             role={message.role}
             content={message.content}
+            index={index}
+            isLast={index === messages.length - 1}
+            isLoading={isLoading}
+            onRegenerate={
+              onRegenerate && index === lastAssistantIndex && !isLoading
+                ? () => onRegenerate(index)
+                : undefined
+            }
+            onEdit={
+              onEditMessage && index === lastUserIndex && !isLoading
+                ? (newContent) => onEditMessage(index, newContent)
+                : undefined
+            }
           />
         ))}
         {isLoading && (

@@ -1,31 +1,55 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { Overview } from "@/components/overview";
 import { Messages } from "@/components/messages";
 import { TextInput } from "@/components/text-input";
 import { MessageProps } from "@/components/message";
 
-export function Chat() {
+interface ChatProps {
+  threadId?: string;
+}
+
+export function Chat({ threadId: initialThreadId }: ChatProps) {
+  const [threadId, setThreadId] = useState<string | undefined>(initialThreadId);
   const [messages, setMessages] = useState<Array<MessageProps>>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(Boolean(initialThreadId));
+  const abortControllerRef = useRef<AbortController | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
+  // Load message history if initialThreadId is provided
+  useEffect(() => {
+    if (initialThreadId) {
+      setIsHydrating(true);
+      fetch(`/api/threads/${initialThreadId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.messages) {
+            setMessages(data.messages);
+          }
+        })
+        .catch((err) => console.error("Failed to load thread history:", err))
+        .finally(() => setIsHydrating(false));
+    }
+  }, [initialThreadId]);
 
-    const userMessage: MessageProps = { role: "user", content: input };
-    const updatedMessages = [...messages, userMessage];
-    
-    setMessages(updatedMessages);
-    setInput("");
+  const handleStop = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+  };
+
+  const streamResponse = async (contextMessages: MessageProps[], targetThreadId: string) => {
     setIsLoading(true);
 
-    // Add placeholder assistant message that will be populated by the stream
-    const assistantMessageIndex = updatedMessages.length;
-    setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+    const assistantMessageIndex = contextMessages.length;
+    setMessages([...contextMessages, { role: "assistant", content: "" }]);
+
+    abortControllerRef.current = new AbortController();
 
     try {
       const response = await fetch("/api/chat", {
@@ -33,9 +57,10 @@ export function Chat() {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: abortControllerRef.current.signal,
         body: JSON.stringify({
-          messages: updatedMessages,
-          id: "default_session", // Using default thread ID secure mapping
+          messages: contextMessages,
+          id: targetThreadId,
         }),
       });
 
@@ -65,34 +90,102 @@ export function Chat() {
           });
         }
       }
-    } catch (error) {
-      console.error("Failed to fetch stream:", error);
-      setMessages((prev) => {
-        const next = [...prev];
-        next[assistantMessageIndex] = {
-          role: "assistant",
-          content: "Sorry, I encountered an error while trying to process your request.",
-        };
-        return next;
-      });
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        console.log("Generation stopped by user.");
+      } else {
+        console.error("Failed to fetch stream:", error);
+        setMessages((prev) => {
+          const next = [...prev];
+          if (!next[assistantMessageIndex]?.content) {
+            next[assistantMessageIndex] = {
+              role: "assistant",
+              content: "Sorry, I encountered an error while trying to process your request.",
+            };
+          }
+          return next;
+        });
+      }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+
+    let activeThreadId = threadId;
+    const currentPrompt = input.trim();
+
+    // Create a new Aegra thread if starting from empty home page
+    if (!activeThreadId) {
+      try {
+        const createRes = await fetch("/api/threads", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: "generic_user",
+            title: currentPrompt,
+          }),
+        });
+        const threadData = await createRes.json();
+        if (threadData.id) {
+          activeThreadId = threadData.id;
+          setThreadId(threadData.id);
+          window.history.replaceState(null, "", `/chat/${threadData.id}`);
+          window.dispatchEvent(new Event("threads-updated"));
+        }
+      } catch (err) {
+        console.error("Failed to auto-create thread:", err);
+      }
+    }
+
+    const userMessage: MessageProps = { role: "user", content: currentPrompt };
+    const updatedMessages = [...messages, userMessage];
+
+    setInput("");
+    await streamResponse(updatedMessages, activeThreadId || "generic_user_default_thread");
+  };
+
+  const handleRegenerate = (assistantIndex: number) => {
+    if (isLoading) return;
+    const contextMessages = messages.slice(0, assistantIndex);
+    if (contextMessages.length === 0) return;
+    streamResponse(contextMessages, threadId || "generic_user_default_thread");
+  };
+
+  const handleEditMessage = (userIndex: number, newContent: string) => {
+    if (isLoading) return;
+    const updatedUserMsg: MessageProps = { role: "user", content: newContent };
+    const contextMessages = [...messages.slice(0, userIndex), updatedUserMsg];
+    streamResponse(contextMessages, threadId || "generic_user_default_thread");
   };
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background">
       <ChatHeader />
-      {messages.length === 0 ? (
+      {isHydrating ? (
+        <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
+          Loading conversation history...
+        </div>
+      ) : messages.length === 0 ? (
         <Overview />
       ) : (
-        <Messages messages={messages} isLoading={isLoading} />
+        <Messages
+          messages={messages}
+          isLoading={isLoading}
+          onRegenerate={handleRegenerate}
+          onEditMessage={handleEditMessage}
+        />
       )}
       <TextInput
         input={input}
         setInput={setInput}
         onSubmit={handleSubmit}
         isLoading={isLoading}
+        onStop={handleStop}
       />
     </div>
   );
