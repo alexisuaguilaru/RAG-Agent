@@ -57,11 +57,11 @@ export function Message({
         className={cn(
           "flex size-8 shrink-0 select-none items-center justify-center rounded-lg border text-sm font-semibold shadow-sm mt-0.5",
           isUser
-            ? "bg-white text-zinc-900 border-zinc-300 dark:bg-zinc-200 dark:text-zinc-900"
+            ? "bg-white text-zinc-900 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700"
             : "bg-muted text-foreground border-sidebar-border"
         )}
       >
-        {isUser ? <User className="size-4 text-zinc-900" /> : <Bot className="size-4" />}
+        {isUser ? <User className="size-4 text-zinc-900 dark:text-zinc-100" /> : <Bot className="size-4" />}
       </div>
 
       {/* Bubble Container */}
@@ -69,19 +69,19 @@ export function Message({
         className={cn(
           "flex flex-col space-y-1.5 overflow-hidden text-sm leading-relaxed shadow-sm relative",
           isUser
-            ? "ml-auto max-w-[82%] sm:max-w-[75%] rounded-2xl rounded-tr-xs bg-white text-zinc-900 border border-zinc-200 dark:bg-zinc-100 dark:text-zinc-900 dark:border-zinc-300 px-4 py-3"
+            ? "ml-auto max-w-[82%] sm:max-w-[75%] rounded-2xl rounded-tr-xs bg-white text-zinc-900 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-100 dark:border-zinc-700 px-4 py-3"
             : "mr-auto max-w-[90%] sm:max-w-[85%] rounded-2xl rounded-tl-xs bg-muted/60 dark:bg-zinc-900 border border-sidebar-border text-foreground px-5 py-4"
         )}
       >
-        <div className={cn("prose max-w-none break-words text-sm leading-relaxed", !isUser && "dark:prose-invert")}>
+        <div className="prose max-w-none break-words text-sm leading-relaxed dark:prose-invert">
           <ReactMarkdown
             remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
+            rehypePlugins={[[rehypeKatex, { strict: false }]]}
             components={{
               p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-              h1: ({ children }) => <h1 className={cn("text-lg font-bold my-2", isUser ? "text-zinc-900" : "text-foreground")}>{children}</h1>,
-              h2: ({ children }) => <h2 className={cn("text-base font-bold my-2", isUser ? "text-zinc-900" : "text-foreground")}>{children}</h2>,
-              h3: ({ children }) => <h3 className={cn("text-sm font-bold my-1.5", isUser ? "text-zinc-900" : "text-foreground")}>{children}</h3>,
+              h1: ({ children }) => <h1 className={cn("text-lg font-bold my-2", isUser ? "text-zinc-900 dark:text-zinc-100" : "text-foreground")}>{children}</h1>,
+              h2: ({ children }) => <h2 className={cn("text-base font-bold my-2", isUser ? "text-zinc-900 dark:text-zinc-100" : "text-foreground")}>{children}</h2>,
+              h3: ({ children }) => <h3 className={cn("text-sm font-bold my-1.5", isUser ? "text-zinc-900 dark:text-zinc-100" : "text-foreground")}>{children}</h3>,
               ul: ({ children }) => <ul className="list-disc pl-5 my-2 space-y-1">{children}</ul>,
               ol: ({ children }) => <ol className="list-decimal pl-5 my-2 space-y-1">{children}</ol>,
               li: ({ children }) => <li className="my-0.5">{children}</li>,

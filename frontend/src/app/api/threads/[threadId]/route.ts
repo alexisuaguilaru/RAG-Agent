@@ -7,12 +7,12 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ threadId: string }> }
 ) {
-  try {
-    const { threadId } = await params;
-    if (!threadId) {
-      return NextResponse.json({ error: "Thread ID is required" }, { status: 400 });
-    }
+  const { threadId } = await params;
+  if (!threadId) {
+    return NextResponse.json({ error: "Thread ID is required" }, { status: 400 });
+  }
 
+  try {
     const aegraUrl = process.env.AEGRA_API_URL || "http://localhost:2026";
     const client = new Client({ apiUrl: aegraUrl });
 
@@ -46,12 +46,12 @@ export async function GET(
       threadId,
       messages,
     });
-  } catch (error: any) {
-    console.error("Get thread state error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to get thread history" },
-      { status: 500 }
-    );
+  } catch {
+    // Return empty message history silently when Aegra is offline/unreachable
+    return NextResponse.json({
+      threadId,
+      messages: [],
+    });
   }
 }
 
@@ -84,10 +84,9 @@ export async function PATCH(
       title: updatedThread.metadata?.title || title.trim(),
     });
   } catch (error: any) {
-    console.error("Patch thread error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to rename thread" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }
@@ -109,10 +108,9 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, threadId });
   } catch (error: any) {
-    console.error("Delete thread error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to delete thread" },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

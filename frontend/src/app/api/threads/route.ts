@@ -59,9 +59,9 @@ export async function GET(req: NextRequest) {
     }));
 
     return NextResponse.json({ threads: formattedThreads });
-  } catch (error: any) {
-    console.error("Fetch threads error:", error);
-    return NextResponse.json({ error: error.message || "Failed to fetch threads" }, { status: 500 });
+  } catch {
+    // Return empty threads list silently when Aegra is offline/unreachable
+    return NextResponse.json({ threads: [] });
   }
 }
 
@@ -88,7 +88,6 @@ export async function POST(req: NextRequest) {
       createdAt: newThread.created_at,
     });
   } catch (error: any) {
-    console.error("Create thread error:", error);
-    return NextResponse.json({ error: error.message || "Failed to create thread" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Failed to create thread" }, { status: 503 });
   }
 }

@@ -41,13 +41,20 @@ export function AppSidebar() {
   const loadThreads = React.useCallback(() => {
     setIsLoading(true);
     fetch("/api/threads?userId=generic_user")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) return { threads: [] };
+        return res.json();
+      })
       .then((data) => {
-        if (data.threads) {
+        if (data && Array.isArray(data.threads)) {
           setThreads(data.threads);
+        } else {
+          setThreads([]);
         }
       })
-      .catch((err) => console.error("Failed to fetch threads:", err))
+      .catch(() => {
+        setThreads([]);
+      })
       .finally(() => setIsLoading(false));
   }, []);
 
@@ -280,7 +287,7 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border py-4 px-3 overflow-hidden">
         {!isCollapsed && (
           <div className="flex items-center justify-between text-xs text-muted-foreground truncate">
-            <span className="truncate">Decoupled Agent Protocol</span>
+            <span className="truncate">RAG Agent</span>
           </div>
         )}
       </SidebarFooter>

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -8,6 +10,20 @@
   --sidebar-border: #e5e7eb;
   --sidebar-accent: #f3f4f6;
   --sidebar-accent-fg: #111827;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #f4f4f5;
+  --sidebar-bg: #18181b;
+  --sidebar-fg: #e4e4e7;
+  --sidebar-border: #27272a;
+  --sidebar-accent: #27272a;
+  --sidebar-accent-fg: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
 }
 
 @theme inline {
@@ -18,20 +34,10 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-accent-foreground: var(--sidebar-accent-fg);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #09090b;
-    --foreground: #f4f4f5;
-    --sidebar-bg: #18181b;
-    --sidebar-fg: #e4e4e7;
-    --sidebar-border: #27272a;
-    --sidebar-accent: #27272a;
-    --sidebar-accent-fg: #fafafa;
-  }
 }
 
 body {

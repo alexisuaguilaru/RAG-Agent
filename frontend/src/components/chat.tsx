@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { ChatHeader } from "@/components/chat-header";
 import { Overview } from "@/components/overview";
 import { Messages } from "@/components/messages";
@@ -18,7 +18,29 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isHydrating, setIsHydrating] = useState(Boolean(initialThreadId));
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Health Probe: instant initial check on mount + 30s spanned background polling
+  const checkConnection = useCallback(() => {
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data) => {
+        setIsConnected(Boolean(data.connected));
+      })
+      .catch(() => {
+        setIsConnected(false);
+      });
+  }, []);
+
+  useEffect(() => {
+    // Instant initial check on mount
+    checkConnection();
+
+    // Spanned background check every 30 seconds
+    const interval = setInterval(checkConnection, 30000);
+    return () => clearInterval(interval);
+  }, [checkConnection]);
 
   // Load message history if initialThreadId is provided, or reset for new chat
   useEffect(() => {
@@ -28,13 +50,18 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
     if (initialThreadId) {
       setIsHydrating(true);
       fetch(`/api/threads/${initialThreadId}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) return { messages: [] };
+          return res.json();
+        })
         .then((data) => {
-          if (data.messages) {
+          if (data && data.messages) {
             setMessages(data.messages);
           }
         })
-        .catch((err) => console.error("Failed to load thread history:", err))
+        .catch(() => {
+          setMessages([]);
+        })
         .finally(() => setIsHydrating(false));
     } else {
       setMessages([]);
@@ -121,7 +148,7 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isConnected === false) return;
 
     let activeThreadId = threadId;
     const currentPrompt = input.trim();
@@ -163,14 +190,14 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
   };
 
   const handleRegenerate = (assistantIndex: number) => {
-    if (isLoading) return;
+    if (isLoading || isConnected === false) return;
     const contextMessages = messages.slice(0, assistantIndex);
     if (contextMessages.length === 0) return;
     streamResponse(contextMessages, threadId || "generic_user_default_thread");
   };
 
   const handleStartEdit = (userIndex: number, currentContent: string) => {
-    if (isLoading) return;
+    if (isLoading || isConnected === false) return;
     setEditingIndex(userIndex);
     setInput(currentContent);
   };
@@ -182,7 +209,7 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-background">
-      <ChatHeader />
+      <ChatHeader isConnected={isConnected} />
       {isHydrating ? (
         <div className="flex flex-1 items-center justify-center text-xs text-muted-foreground">
           Loading conversation history...
@@ -205,6 +232,7 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
         onStop={handleStop}
         isEditing={editingIndex !== null}
         onCancelEdit={handleCancelEdit}
+        isDisabled={!isConnected}
       />
     </div>
   );
