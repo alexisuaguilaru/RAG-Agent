@@ -6,5 +6,5 @@ export default async function ThreadChatPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <Chat threadId={id} />;
+  return <Chat key={id} threadId={id} />;
 }

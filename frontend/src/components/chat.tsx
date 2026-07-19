@@ -17,10 +17,14 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isHydrating, setIsHydrating] = useState(Boolean(initialThreadId));
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Load message history if initialThreadId is provided
+  // Load message history if initialThreadId is provided, or reset for new chat
   useEffect(() => {
+    setThreadId(initialThreadId);
+    setEditingIndex(null);
+    setInput("");
     if (initialThreadId) {
       setIsHydrating(true);
       fetch(`/api/threads/${initialThreadId}`)
@@ -32,6 +36,9 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
         })
         .catch((err) => console.error("Failed to load thread history:", err))
         .finally(() => setIsHydrating(false));
+    } else {
+      setMessages([]);
+      setIsHydrating(false);
     }
   }, [initialThreadId]);
 
@@ -142,8 +149,14 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
       }
     }
 
+    let baseMessages = messages;
+    if (editingIndex !== null) {
+      baseMessages = messages.slice(0, editingIndex);
+      setEditingIndex(null);
+    }
+
     const userMessage: MessageProps = { role: "user", content: currentPrompt };
-    const updatedMessages = [...messages, userMessage];
+    const updatedMessages = [...baseMessages, userMessage];
 
     setInput("");
     await streamResponse(updatedMessages, activeThreadId || "generic_user_default_thread");
@@ -156,11 +169,15 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
     streamResponse(contextMessages, threadId || "generic_user_default_thread");
   };
 
-  const handleEditMessage = (userIndex: number, newContent: string) => {
+  const handleStartEdit = (userIndex: number, currentContent: string) => {
     if (isLoading) return;
-    const updatedUserMsg: MessageProps = { role: "user", content: newContent };
-    const contextMessages = [...messages.slice(0, userIndex), updatedUserMsg];
-    streamResponse(contextMessages, threadId || "generic_user_default_thread");
+    setEditingIndex(userIndex);
+    setInput(currentContent);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIndex(null);
+    setInput("");
   };
 
   return (
@@ -177,7 +194,7 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
           messages={messages}
           isLoading={isLoading}
           onRegenerate={handleRegenerate}
-          onEditMessage={handleEditMessage}
+          onEditMessage={handleStartEdit}
         />
       )}
       <TextInput
@@ -186,6 +203,8 @@ export function Chat({ threadId: initialThreadId }: ChatProps) {
         onSubmit={handleSubmit}
         isLoading={isLoading}
         onStop={handleStop}
+        isEditing={editingIndex !== null}
+        onCancelEdit={handleCancelEdit}
       />
     </div>
   );

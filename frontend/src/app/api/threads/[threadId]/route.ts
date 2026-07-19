@@ -55,6 +55,43 @@ export async function GET(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ threadId: string }> }
+) {
+  try {
+    const { threadId } = await params;
+    const { title } = await req.json();
+
+    if (!threadId) {
+      return NextResponse.json({ error: "Thread ID is required" }, { status: 400 });
+    }
+    if (!title || !title.trim()) {
+      return NextResponse.json({ error: "Title is required" }, { status: 400 });
+    }
+
+    const aegraUrl = process.env.AEGRA_API_URL || "http://localhost:2026";
+    const client = new Client({ apiUrl: aegraUrl });
+
+    const threadsClient = client.threads as any;
+    const updatedThread = typeof threadsClient.update === "function"
+      ? await threadsClient.update(threadId, { metadata: { title: title.trim() } })
+      : await threadsClient.patch(threadId, { metadata: { title: title.trim() } });
+
+    return NextResponse.json({
+      success: true,
+      threadId,
+      title: updatedThread.metadata?.title || title.trim(),
+    });
+  } catch (error: any) {
+    console.error("Patch thread error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to rename thread" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ threadId: string }> }

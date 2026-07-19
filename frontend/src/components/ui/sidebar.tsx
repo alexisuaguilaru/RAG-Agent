@@ -112,8 +112,9 @@ export function Sidebar({
 
   return (
     <div
+      data-state={state}
       className={cn(
-        "hidden md:flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        "hidden md:flex flex-col h-full bg-sidebar border-r border-sidebar-border transition-all duration-300 overflow-hidden select-none",
         state === "expanded" ? "w-[260px]" : "w-[60px]",
         className
       )}
