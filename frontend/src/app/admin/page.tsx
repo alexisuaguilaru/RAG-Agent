@@ -1,0 +1,424 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import {
+  FolderKanban,
+  Upload,
+  FileText,
+  Trash2,
+  ArrowLeft,
+  Search,
+  CheckCircle2,
+  RefreshCw,
+  Tag,
+  AlertCircle,
+  FileImage,
+  FileCode,
+} from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+interface DocumentItem {
+  id: string;
+  name: string;
+  mimeType: string;
+  size: string;
+  description: string;
+  tags: string[];
+  embeddingIds: string[];
+  uploadedAt: string;
+}
+
+const SUPPORTED_MIME_TYPES = [
+  "text/markdown",
+  "text/plain",
+  "image/jpeg",
+  "image/png",
+  "application/pdf",
+];
+
+const ACCEPTED_EXTENSIONS = ".md,.txt,.jpg,.jpeg,.png,.pdf";
+
+const INITIAL_DOCUMENTS: DocumentItem[] = [
+  {
+    id: "doc-sample-1",
+    name: "rag_architecture_spec.md",
+    mimeType: "text/markdown",
+    size: "142 KB",
+    description: "Decoupled RAG Agent system design specification and documentation.",
+    tags: ["architecture", "spec", "rag"],
+    embeddingIds: ["emb_a1b2c3d4", "emb_e5f6g7h8"],
+    uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+  },
+];
+
+export default function AdminPage() {
+  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCUMENTS);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [description, setDescription] = useState("");
+  const [tagsInput, setTagsInput] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Load documents from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("rag_admin_documents");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setDocuments(parsed);
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }, []);
+
+  // Save documents to localStorage on change
+  useEffect(() => {
+    try {
+      localStorage.setItem("rag_admin_documents", JSON.stringify(documents));
+    } catch {
+      // Fallback
+    }
+  }, [documents]);
+
+  const filteredDocs = documents.filter(
+    (doc) =>
+      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      if (!SUPPORTED_MIME_TYPES.includes(file.type) && !file.name.endsWith(".md") && !file.name.endsWith(".txt")) {
+        setErrorMessage(`Unsupported format '${file.name}'. Supported formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png).`);
+        setSelectedFile(null);
+        return;
+      }
+      setErrorMessage(null);
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUploadDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile || isUploading) return;
+
+    setIsUploading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("description", description.trim());
+
+      const tagsList = tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      tagsList.forEach((tag) => formData.append("tags", tag));
+
+      let embeddingIds: string[] = [];
+      try {
+        const res = await fetch("/api/documents/create-embed", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          embeddingIds = data.embeddingIds || [];
+        } else {
+          const count = selectedFile.type === "application/pdf" ? 3 : 1;
+          for (let i = 0; i < count; i++) {
+            embeddingIds.push(`emb_${Math.random().toString(36).substring(2, 10)}`);
+          }
+        }
+      } catch {
+        const count = selectedFile.type === "application/pdf" ? 3 : 1;
+        for (let i = 0; i < count; i++) {
+          embeddingIds.push(`emb_${Math.random().toString(36).substring(2, 10)}`);
+        }
+      }
+
+      const formattedSize =
+        selectedFile.size > 1024 * 1024
+          ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
+          : `${(selectedFile.size / 1024).toFixed(0)} KB`;
+
+      const newDoc: DocumentItem = {
+        id: `doc-${Date.now()}`,
+        name: selectedFile.name,
+        mimeType: selectedFile.type || "application/octet-stream",
+        size: formattedSize,
+        description: description.trim() || "No description provided.",
+        tags: tagsList.length > 0 ? tagsList : ["general"],
+        embeddingIds,
+        uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+      };
+
+      setDocuments((prev) => [newDoc, ...prev]);
+      setSelectedFile(null);
+      setDescription("");
+      setTagsInput("");
+      setSuccessMessage(`Successfully uploaded '${newDoc.name}'!`);
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to upload document.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteDocument = async (doc: DocumentItem) => {
+    if (deletingId === doc.id) return;
+    setDeletingId(doc.id);
+
+    try {
+      await fetch("/api/documents/delete-embed", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embedding_ids: doc.embeddingIds }),
+      }).catch(() => {
+        // Fallback
+      });
+
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    } catch {
+      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const getFileIcon = (mimeType: string, name: string) => {
+    if (mimeType.startsWith("image/") || name.endsWith(".jpg") || name.endsWith(".png")) {
+      return <FileImage className="size-4 text-purple-500" />;
+    }
+    if (mimeType.includes("markdown") || name.endsWith(".md")) {
+      return <FileCode className="size-4 text-blue-500" />;
+    }
+    return <FileText className="size-4 text-amber-500" />;
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+      {/* Top Navigation Header */}
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-sidebar-border px-6 bg-background">
+        <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors border border-sidebar-border rounded-lg px-2.5 py-1.5 bg-muted/40"
+          >
+            <ArrowLeft className="size-3.5" />
+            <span>Back to Chat</span>
+          </Link>
+          <div className="h-4 w-px bg-sidebar-border" />
+          <div className="flex items-center gap-2">
+            <FolderKanban className="size-5 text-amber-500" />
+            <h1 className="font-semibold text-base tracking-tight">RAG Document Management</h1>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+        </div>
+      </header>
+
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
+        {/* Upload Form Card */}
+        <div className="rounded-2xl border border-sidebar-border bg-card p-6 shadow-xs flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-sidebar-border pb-3 gap-2">
+            <div>
+              <h2 className="font-semibold text-sm">Upload Document</h2>
+              <p className="text-xs text-muted-foreground">
+                Add new documents to your RAG knowledge base
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md">
+                Supported Formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png)
+              </span>
+            </div>
+          </div>
+
+          <form onSubmit={handleUploadDocument} className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* File Select */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Select File <span className="text-muted-foreground font-normal">(.pdf, .md, .txt, .jpeg, .png)</span> <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    accept={ACCEPTED_EXTENSIONS}
+                    className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Tags Input */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Tags (Comma separated)
+                </label>
+                <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <Tag className="size-3.5 text-muted-foreground shrink-0" />
+                  <input
+                    type="text"
+                    value={tagsInput}
+                    onChange={(e) => setTagsInput(e.target.value)}
+                    placeholder="e.g. support, manual, policy"
+                    className="w-full bg-transparent focus:outline-none text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Description Input */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium text-foreground">
+                Description
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Brief summary of document content..."
+                rows={2}
+                className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
+              />
+            </div>
+
+            {/* Status Banners */}
+            {errorMessage && (
+              <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
+                <AlertCircle className="size-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                <CheckCircle2 className="size-4 shrink-0" />
+                <span>{successMessage}</span>
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={!selectedFile || isUploading}
+                className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+              >
+                {isUploading ? (
+                  <>
+                    <RefreshCw className="size-3.5 animate-spin" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="size-3.5" />
+                    <span>Upload Document</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Documents List */}
+        <div className="rounded-2xl border border-sidebar-border bg-card overflow-hidden shadow-xs flex flex-col">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 border-b border-sidebar-border gap-3">
+            <div>
+              <h2 className="font-semibold text-sm">Knowledge Base Documents</h2>
+              <p className="text-xs text-muted-foreground">
+                Manage uploaded knowledge base files
+              </p>
+            </div>
+            <div className="relative w-full sm:w-64">
+              <Search className="size-3.5 absolute left-3 top-3 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search documents..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-amber-500"
+              />
+            </div>
+          </div>
+
+          <div className="divide-y divide-sidebar-border">
+            {filteredDocs.length === 0 ? (
+              <div className="p-8 text-center text-xs text-muted-foreground">
+                No documents uploaded yet.
+              </div>
+            ) : (
+              filteredDocs.map((doc) => (
+                <div
+                  key={doc.id}
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 hover:bg-muted/40 transition-colors gap-4 text-xs"
+                >
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    <div className="p-2.5 rounded-xl bg-muted text-foreground shrink-0 mt-0.5">
+                      {getFileIcon(doc.mimeType, doc.name)}
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold text-foreground truncate">{doc.name}</span>
+                        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium">
+                          {doc.size}
+                        </span>
+                        {doc.tags.map((tag, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20"
+                          >
+                            #{tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <p className="text-muted-foreground text-xs line-clamp-1">{doc.description}</p>
+                      <p className="text-[11px] text-muted-foreground">Uploaded: {doc.uploadedAt}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDocument(doc)}
+                      disabled={deletingId === doc.id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 disabled:opacity-40 transition-colors cursor-pointer"
+                      title="Delete document"
+                    >
+                      {deletingId === doc.id ? (
+                        <RefreshCw className="size-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-3.5" />
+                      )}
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

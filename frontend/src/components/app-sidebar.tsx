@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageSquare, Bot, Plus, Trash2, Loader2, Pencil, Check, X } from "lucide-react";
+import { MessageSquare, Bot, Plus, Trash2, Loader2, Pencil, Check, X, FolderKanban } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -284,12 +284,20 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border py-4 px-3 overflow-hidden">
-        {!isCollapsed && (
-          <div className="flex items-center justify-between text-xs text-muted-foreground truncate">
-            <span className="truncate">RAG Agent</span>
-          </div>
-        )}
+      <SidebarFooter className="border-t border-sidebar-border py-3 px-3 overflow-hidden">
+        <Link
+          href="/admin"
+          className={cn(
+            "flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-sidebar-foreground transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground border border-sidebar-border/60 bg-background/50 shadow-xs cursor-pointer",
+            isCollapsed ? "justify-center px-0 py-2.5" : "w-full"
+          )}
+          title="RAG Document Admin Dashboard"
+        >
+          <FolderKanban className="size-4 shrink-0 text-amber-500" />
+          {!isCollapsed && (
+            <span className="truncate font-semibold">RAG Documents Admin</span>
+          )}
+        </Link>
       </SidebarFooter>
     </Sidebar>
   );
