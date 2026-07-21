@@ -208,6 +208,32 @@ services:
         ports:
             - "5432:5432"
 
+    garage-s3:
+        image: dxflrs/garage:v2.3.0
+        container_name: garage-s3
+
+        healthcheck:
+            test: [ "CMD", "/garage", "status" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        environment:
+            - GARAGE_DEFAULT_BUCKET=rag-bucket
+            - GARAGE_DEFAULT_ACCESS_KEY=GK${GARAGE_DEFAULT_ACCESS_KEY}
+            - GARAGE_DEFAULT_SECRET_KEY=${GARAGE_DEFAULT_SECRET_KEY}
+
+        volumes:
+            - ./garage/garage.toml:/etc/garage.toml:ro
+            - garage_metadata:/var/tmp/meta
+            - garage_data:/var/tmp/data
+
+        ports:
+            - "3900:3900"
+            - "3901:3901"
+
+        command: "/garage server --single-node --default-bucket"
+
     chroma-db:
         build:
             context: ./chroma
@@ -237,4 +263,6 @@ services:
 volumes:
     postgres_data:
     redis_data:
+    garage_metadata:
+    garage_data:
     chroma_data:
