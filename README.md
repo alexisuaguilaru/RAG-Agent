@@ -113,7 +113,9 @@ docker compose up
 ```
 
 ### Web Interface
-This project does not have a UI to interact with the RAG agent, but you can use [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
+This project has a UI to interact with the RAG agent based on Next.js (React) and was developed enterily using Antigravity (Gemini 3.5 Flash). Follow the instructions in [README.md](./frontend/README.md) to run it and test the agent. 
+
+Also you can use [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
 
 ## Run Tests
 To execute the basic, initial tests, use the next command:
