@@ -4,12 +4,12 @@ from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from rag_api.schemas.requests import DeleteFilesEmbeddings
-from rag_api.schemas.responses import CreateFileEmbed
+from rag_api.schemas.responses import CreateFileEmbed, StoredEmbedFile
 from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
-from rag_api.processors.file_object_processor import get_file_embedding_ids
+from rag_api.processors.file_object_processor import clean_file_object_data, get_file_embedding_ids
 from rag_api.services.embedding import embed_content, delete_embeddings
-from rag_api.services.object import upload_embed_file, get_uploaded_file, delete_file_object
+from rag_api.services.object import upload_embed_file, gather_all_files, get_uploaded_file, delete_file_object
 
 router = APIRouter()
 
@@ -18,7 +18,7 @@ router = APIRouter()
     description = "Generate the file's embeddings and load it into the vector store with their tags.",
     response_model = CreateFileEmbed
 )
-async def embed_files(
+async def embed_file(
         file: Annotated[UploadFile, File()],
         description: Annotated[str, Form()] =  "",
         tags: Annotated[List[str], Form()] = [],
@@ -69,6 +69,25 @@ async def embed_files(
         )
     
     return {"file_id": file_id}
+
+@router.get(
+    "/",
+    description = "Get all the uploaded, embedded files"
+)
+async def get_embed_files() -> List[StoredEmbedFile]:
+    """
+    Get and return a list of all the stored and embed files 
+    in the databases. It is not necessary to provide more 
+    information when this endpoint is used.
+
+    Returns:
+        file_objects_data (List[StoredEmbedFile]): List of schemas which represent the relevant data and metadata of every stored file in the databases
+    """
+
+    file_objects = await gather_all_files()
+    file_objects_data = [await get_uploaded_file(file_object["Key"]) for file_object in file_objects]
+    return list(map(clean_file_object_data, file_objects_data))
+
 
 @router.delete(
     "/delete-embed",

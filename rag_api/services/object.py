@@ -1,7 +1,7 @@
 from typing import List
 
 from fastapi import UploadFile
-from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
+from mypy_boto3_s3.type_defs import ObjectTypeDef, GetObjectOutputTypeDef
 
 from rag_api.database.object_storage import get_object_storage
 
@@ -40,6 +40,7 @@ async def upload_embed_file(
         "ContentType": file.content_type,
         "ContentDisposition": "inline",
         "Metadata": {
+            "filename": file.filename,
             "description": description,
             "tags": _stringify_list(tags),
             "embedding_ids": _stringify_list(embedding_ids),
@@ -58,6 +59,16 @@ async def upload_embed_file(
 
     return file_id
 
+async def gather_all_files() -> List[ObjectTypeDef]:
+    """
+    Function to gather all the stored files in the S3 storage. 
+
+    Returns:
+        file_objects (List[ObjectTypeDef]): List of embedded files stored in the S3 bucket
+    """
+
+    return object_storage.list_objects(Bucket="rag-bucket").get("Contents", [])
+
 async def get_uploaded_file(
         file_id: str,
     ) -> GetObjectOutputTypeDef:
@@ -75,6 +86,7 @@ async def get_uploaded_file(
 
     try:
         file_object = object_storage.get_object(Bucket="rag-bucket", Key=file_id)
+        file_object["Key"] = file_id
         return file_object
     except Exception as e:
         raise Exception("File not found")
