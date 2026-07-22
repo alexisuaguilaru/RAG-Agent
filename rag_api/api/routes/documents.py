@@ -1,24 +1,27 @@
-from typing import Annotated, List
+from typing import Annotated, List, Any
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from rag_api.schemas.requests import DeleteFilesEmbeddings
+from rag_api.schemas.responses import CreateFileEmbed
 from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
 from rag_api.services.embedding import embed_content, delete_embeddings
+from rag_api.services.object import upload_embed_file
 
 router = APIRouter()
 
 @router.post(
     "/create-embed",
-    description = "Generate the file's embeddings and load it into the vector store with their tags."
+    description = "Generate the file's embeddings and load it into the vector store with their tags.",
+    response_model = CreateFileEmbed
 )
 async def embed_files(
         file: Annotated[UploadFile, File()],
         description: Annotated[str, Form()] =  "",
         tags: Annotated[List[str], Form()] = [],
-    ) -> List[str]:
+    ) -> Any:
     """
     Embed the content of text files and every page of a PDF file is embedded like an image. 
     The texts and images are fused with the provided description. And the tags are passed 
@@ -30,7 +33,7 @@ async def embed_files(
         tags (List[str]): Tags associated with the file's content
 
     Returns:
-        embeddings_ids (List[str]): List of IDs of every embedding vector created. One ID for plain text and image, and many IDs for a PDF file
+        response (CreateFileEmbed): Response schema with the file_id assigned to the embedded document.
         
     Raises:
         HTTPException[415]: File format is incompatible or unsupported
@@ -52,10 +55,19 @@ async def embed_files(
     except Exception as e:
         raise HTTPException(
             status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail = "Issue to embed files",
+            detail = "Issue to embed file",
         )
     
-    return embedding_ids
+    try:
+        file_id = await upload_embed_file(file, description, tags, embedding_ids)
+    except Exception as e:
+        await delete_embeddings(embedding_ids)
+        raise HTTPException(
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail = "Issue to upload file",
+        )
+    
+    return {"file_id": file_id}
 
 @router.delete(
     "/delete-embed",
