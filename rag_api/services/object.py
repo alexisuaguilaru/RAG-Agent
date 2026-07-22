@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import UploadFile
+from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
 
 from rag_api.database.object_storage import get_object_storage
 
@@ -56,6 +57,40 @@ async def upload_embed_file(
         raise e
 
     return file_id
+
+async def get_uploaded_file(
+        file_id: str,
+    ) -> GetObjectOutputTypeDef:
+    """
+    Function to get the file's data and metadata based 
+    on its ID. Return the information returned by 
+    boto3.
+
+    Args:
+        file_id (str): File's ID associated to the file to retrieve
+
+    Returns:
+        file_object (GetObjectOutputTypeDef): Schema response with the information and data associated to the retrieved file
+    """
+
+    try:
+        file_object = object_storage.get_object(Bucket="rag-bucket", Key=file_id)
+        return file_object
+    except Exception as e:
+        raise Exception("File not found")
+    
+async def delete_file_object(
+        file_id: str
+    ) -> None:
+    """
+    Function to delete a file based on its ID. It is 
+    removed permanently.
+
+    Args:
+        file_id (str): File's ID to delete
+    """
+
+    object_storage.delete_object(Bucket="rag-bucket", Key=file_id)
 
 def _get_file_id(
         file: UploadFile

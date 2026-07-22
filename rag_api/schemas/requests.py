@@ -6,11 +6,10 @@ class DeleteFilesEmbeddings(BaseModel):
     """
     Class for formatting the request's payload for 
     /documents/delete-embed endpoint. This class 
-    stores a list of embedding IDs to delete which 
-    can belong to different files
+    stores a file's ID to delete.
     """
 
-    embedding_ids: List[str]
+    file_id: str
 
 class QuerySearchDocuments(BaseModel):
     """
