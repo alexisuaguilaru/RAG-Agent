@@ -91,6 +91,24 @@ async def get_uploaded_file(
     except Exception as e:
         raise Exception("File not found")
     
+async def stream_file(
+        file_id: str,
+        file_object: GetObjectOutputTypeDef, 
+    ):
+    """
+    Function to stream the content of a file.
+
+    Args: 
+        file_id (str): File's ID of the file to stream
+        file_object (GetObjectOutputTypeDef): Object representation of the file to stream
+
+    Yields:
+        data_chunk (bytes): File'chunk being streamed
+    """
+
+    for data_chunk in file_object["Body"].iter_chunks(1024*1024):
+        yield data_chunk
+    
 async def delete_file_object(
         file_id: str
     ) -> None:

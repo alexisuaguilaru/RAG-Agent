@@ -1,11 +1,11 @@
 from typing import List, Any
 
-from mypy_boto3_s3.type_defs import ObjectTypeDef, GetObjectOutputTypeDef
+from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
 
 from rag_api.schemas.responses import StoredEmbedFile
 
 def clean_file_object_data(
-        file_object_data: ObjectTypeDef,
+        file_object: GetObjectOutputTypeDef,
     ) -> dict[str, Any]:
     """
     Function to process and clean file object's data 
@@ -19,13 +19,36 @@ def clean_file_object_data(
     """
 
     return {
-        "file_id": file_object_data["Key"],
-        "filename": file_object_data["Metadata"]["filename"],
-        "last_modification": file_object_data["LastModified"],
-        "content_type": file_object_data["ContentType"],
-        "description": file_object_data["Metadata"]["description"],
-        "tags": file_object_data["Metadata"]["tags"].split(","),
+        "file_id": file_object["Key"],
+        "filename": file_object["Metadata"]["filename"],
+        "last_modification": file_object["LastModified"],
+        "content_type": file_object["ContentType"],
+        "description": file_object["Metadata"]["description"],
+        "tags": file_object["Metadata"]["tags"].split(","),
     }
+
+def get_stream_headers(
+        file_object: GetObjectOutputTypeDef,
+    ) -> dict[str, str]:
+    """
+    Function to create the headers to stream a file 
+    based on its object's data. 
+
+    Args:
+        file_object (ObjectTypeDef): File object to stream
+
+    Returns:
+        stream_headers (dict[str, str]): Headers of the file to stream 
+    """
+
+    stream_headers = {
+        "Content-Disposition": file_object["ContentDisposition"],
+        "Content-Length": str(file_object["ContentLength"]),
+        "Cache-Control": "public, max-age=86400",
+        "Accept-Ranges": "bytes",
+    }
+
+    return stream_headers
 
 def get_file_embedding_ids(
         file_object: GetObjectOutputTypeDef,

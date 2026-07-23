@@ -1,15 +1,15 @@
 from typing import Annotated, List, Any
 
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from rag_api.schemas.requests import DeleteFilesEmbeddings
 from rag_api.schemas.responses import CreateFileEmbed, StoredEmbedFile
 from rag_api.processors.file_processor import file_processor
 from rag_api.processors.content_processor import get_formatted_content_blocks
-from rag_api.processors.file_object_processor import clean_file_object_data, get_file_embedding_ids
+from rag_api.processors.file_object_processor import clean_file_object_data, get_stream_headers, get_file_embedding_ids
 from rag_api.services.embedding import embed_content, delete_embeddings
-from rag_api.services.object import upload_embed_file, gather_all_files, get_uploaded_file, delete_file_object
+from rag_api.services.object import upload_embed_file, gather_all_files, get_uploaded_file, stream_file, delete_file_object
 
 router = APIRouter()
 
@@ -72,7 +72,8 @@ async def embed_file(
 
 @router.get(
     "/",
-    description = "Get all the uploaded, embedded files"
+    description = "Get all the uploaded, embedded files",
+    response_model = List[StoredEmbedFile]
 )
 async def get_embed_files() -> List[StoredEmbedFile]:
     """
@@ -88,6 +89,50 @@ async def get_embed_files() -> List[StoredEmbedFile]:
     file_objects_data = [await get_uploaded_file(file_object["Key"]) for file_object in file_objects]
     return list(map(clean_file_object_data, file_objects_data))
 
+@router.get(
+    "/{file_id}",
+    description = "Get streaming to render on web a file"
+)
+async def get_file(
+        file_id: str,
+    ):
+    """
+    Get an online visualization of an uploaded file based 
+    on its stored data in the S3.
+
+    Args: 
+        file_id (str): File's ID to stream or display online
+
+    Returns:
+        stream (StreamingResponse): Stream with the file content to display
+
+    Raises:
+        HTTPException[404]: The file's ID was not found in the object storage
+        HTTPException[500]: Error at streaming file data to display online
+    """
+
+    try:
+        file_object = await get_uploaded_file(file_id)
+    except:
+        raise HTTPException(
+            status_code = status.HTTP_404_NOT_FOUND,
+            detail = "File not found",
+        )
+    
+    stream_data = stream_file(file_id, file_object)
+    stream_headers = get_stream_headers(file_object)
+
+    try:
+        return StreamingResponse(
+            stream_data,
+            headers = stream_headers,
+            media_type = file_object["ContentType"],
+        )
+    except:
+        raise HTTPException(
+            status_code = status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail = "Stream file issue",
+        )
 
 @router.delete(
     "/delete-embed",
