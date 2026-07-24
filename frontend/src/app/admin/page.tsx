@@ -50,6 +50,9 @@ export default function AdminPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingFile, setViewingFile] = useState<StoredEmbedFile | null>(null);
+  const [activeTab, setActiveTab] = useState<"upload" | "write">("upload");
+  const [markdownTitle, setMarkdownTitle] = useState("");
+  const [markdownContent, setMarkdownContent] = useState("");
 
   // Fetch real stored files from GET /api/documents (FastAPI http://localhost:6060/documents/)
   const fetchDocuments = useCallback(async () => {
@@ -153,6 +156,58 @@ export default function AdminPage() {
     }
   };
 
+  const handleCreateMarkdown = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!markdownContent.trim() || isUploading) return;
+
+    setIsUploading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      let rawTitle = markdownTitle.trim() || "untitled_note.md";
+      if (!rawTitle.endsWith(".md")) {
+        rawTitle += ".md";
+      }
+
+      const fileBlob = new File([markdownContent.trim()], rawTitle, {
+        type: "text/markdown",
+      });
+
+      const formData = new FormData();
+      formData.append("file", fileBlob);
+      formData.append("description", description.trim());
+
+      const tagsList = tagsInput
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      tagsList.forEach((tag) => formData.append("tags", tag));
+
+      const res = await fetch("/api/documents/create-embed", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || errData.detail || "Failed to create markdown document");
+      }
+
+      setMarkdownTitle("");
+      setMarkdownContent("");
+      setDescription("");
+      setTagsInput("");
+      setSuccessMessage(`Successfully created and embedded '${rawTitle}' into RAG knowledge base!`);
+      await fetchDocuments();
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to create markdown document.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleDeleteDocument = async (fileId: string) => {
     if (deletingId === fileId) return;
     setDeletingId(fileId);
@@ -234,106 +289,245 @@ export default function AdminPage() {
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
         {/* Upload Form Card */}
         <div className="rounded-2xl border border-sidebar-border bg-card p-6 shadow-xs flex flex-col gap-4">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-sidebar-border pb-3 gap-2">
-            <div>
-              <h2 className="font-semibold text-sm">Upload Document</h2>
-              <p className="text-xs text-muted-foreground">
-                Add new documents to your RAG knowledge base
-              </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-sidebar-border pb-3 gap-3">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("upload");
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  activeTab === "upload"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
+                }`}
+              >
+                <Upload className="size-3.5" />
+                <span>Upload File</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("write");
+                  setErrorMessage(null);
+                  setSuccessMessage(null);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
+                  activeTab === "write"
+                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
+                }`}
+              >
+                <FileCode className="size-3.5" />
+                <span>Write Markdown</span>
+              </button>
             </div>
+
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md">
-                Supported Formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png)
+                {activeTab === "upload"
+                  ? "Supported Formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png)"
+                  : "Markdown Document (.md)"}
               </span>
             </div>
           </div>
 
-          <form onSubmit={handleUploadDocument} className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* File Select */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-medium text-foreground">
-                  Select File <span className="text-muted-foreground font-normal">(.pdf, .md, .txt, .jpeg, .png)</span> <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    accept={ACCEPTED_EXTENSIONS}
-                    className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20"
-                    required
-                  />
+          {activeTab === "upload" ? (
+            /* TAB 1: FILE UPLOAD FORM */
+            <form onSubmit={handleUploadDocument} className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* File Select */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">
+                    Select File <span className="text-muted-foreground font-normal">(.pdf, .md, .txt, .jpeg, .png)</span> <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                    <input
+                      type="file"
+                      onChange={handleFileChange}
+                      accept={ACCEPTED_EXTENSIONS}
+                      className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Input */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">
+                    Tags (Comma separated)
+                  </label>
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                    <Tag className="size-3.5 text-muted-foreground shrink-0" />
+                    <input
+                      type="text"
+                      value={tagsInput}
+                      onChange={(e) => setTagsInput(e.target.value)}
+                      placeholder="e.g. support, manual, policy"
+                      className="w-full bg-transparent focus:outline-none text-xs"
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Tags Input */}
+              {/* Description Input */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-foreground">
-                  Tags (Comma separated)
+                  Description
                 </label>
-                <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
-                  <Tag className="size-3.5 text-muted-foreground shrink-0" />
-                  <input
-                    type="text"
-                    value={tagsInput}
-                    onChange={(e) => setTagsInput(e.target.value)}
-                    placeholder="e.g. support, manual, policy"
-                    className="w-full bg-transparent focus:outline-none text-xs"
-                  />
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief summary of document content..."
+                  rows={2}
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
+                />
+              </div>
+
+              {/* Status Banners */}
+              {errorMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={!selectedFile || isUploading}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                >
+                  {isUploading ? (
+                    <>
+                      <RefreshCw className="size-3.5 animate-spin" />
+                      <span>Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="size-3.5" />
+                      <span>Upload Document</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          ) : (
+            /* TAB 2: WRITE MARKDOWN FORM */
+            <form onSubmit={handleCreateMarkdown} className="flex flex-col gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Document Filename */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">
+                    Document Filename <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                    <FileCode className="size-3.5 text-muted-foreground shrink-0" />
+                    <input
+                      type="text"
+                      value={markdownTitle}
+                      onChange={(e) => setMarkdownTitle(e.target.value)}
+                      placeholder="e.g. system_instructions.md"
+                      className="w-full bg-transparent focus:outline-none text-xs font-mono"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Tags Input */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-foreground">
+                    Tags (Comma separated)
+                  </label>
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                    <Tag className="size-3.5 text-muted-foreground shrink-0" />
+                    <input
+                      type="text"
+                      value={tagsInput}
+                      onChange={(e) => setTagsInput(e.target.value)}
+                      placeholder="e.g. guide, internal, faq"
+                      className="w-full bg-transparent focus:outline-none text-xs"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Description Input */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-medium text-foreground">
-                Description
-              </label>
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief summary of document content..."
-                rows={2}
-                className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
-              />
-            </div>
-
-            {/* Status Banners */}
-            {errorMessage && (
-              <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
-                <AlertCircle className="size-4 shrink-0" />
-                <span>{errorMessage}</span>
+              {/* Markdown Content Editor */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Markdown Content <span className="text-rose-500">*</span>
+                </label>
+                <textarea
+                  value={markdownContent}
+                  onChange={(e) => setMarkdownContent(e.target.value)}
+                  placeholder="# Document Title&#10;&#10;Write your markdown knowledge article here..."
+                  rows={6}
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-amber-500 resize-y leading-relaxed"
+                  required
+                />
               </div>
-            )}
 
-            {successMessage && (
-              <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                <CheckCircle2 className="size-4 shrink-0" />
-                <span>{successMessage}</span>
+              {/* Description Input */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Description
+                </label>
+                <textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief summary of markdown document..."
+                  rows={2}
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
+                />
               </div>
-            )}
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={!selectedFile || isUploading}
-                className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-              >
-                {isUploading ? (
-                  <>
-                    <RefreshCw className="size-3.5 animate-spin" />
-                    <span>Uploading...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="size-3.5" />
-                    <span>Upload Document</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
+              {/* Status Banners */}
+              {errorMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3 text-xs text-rose-600 dark:text-rose-400">
+                  <AlertCircle className="size-4 shrink-0" />
+                  <span>{errorMessage}</span>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                  <CheckCircle2 className="size-4 shrink-0" />
+                  <span>{successMessage}</span>
+                </div>
+              )}
+
+              {/* Submit Button */}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={!markdownTitle.trim() || !markdownContent.trim() || isUploading}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                >
+                  {isUploading ? (
+                    <>
+                      <RefreshCw className="size-3.5 animate-spin" />
+                      <span>Creating & Embedding...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FileCode className="size-3.5" />
+                      <span>Save & Embed Markdown</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
 
         {/* Documents List */}
