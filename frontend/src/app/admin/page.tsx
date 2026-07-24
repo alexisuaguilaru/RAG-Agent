@@ -242,7 +242,7 @@ export default function AdminPage() {
     if (mimeType.includes("markdown") || name.endsWith(".md")) {
       return <FileCode className="size-4 text-blue-500" />;
     }
-    return <FileText className="size-4 text-amber-500" />;
+    return <FileText className="size-4 text-blue-500" />;
   };
 
   const formatDate = (isoString: string) => {
@@ -267,7 +267,7 @@ export default function AdminPage() {
           </Link>
           <div className="h-4 w-px bg-sidebar-border" />
           <div className="flex items-center gap-2">
-            <FolderKanban className="size-5 text-amber-500" />
+            <FolderKanban className="size-5 text-blue-600 dark:text-blue-400" />
             <h1 className="font-semibold text-base tracking-tight">RAG Document Management</h1>
           </div>
         </div>
@@ -300,7 +300,7 @@ export default function AdminPage() {
                 }}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "upload"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
                 }`}
               >
@@ -316,7 +316,7 @@ export default function AdminPage() {
                 }}
                 className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
                   activeTab === "write"
-                    ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                    ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
                 }`}
               >
@@ -326,7 +326,7 @@ export default function AdminPage() {
             </div>
 
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-md">
+              <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
                 {activeTab === "upload"
                   ? "Supported Formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png)"
                   : "Markdown Document (.md)"}
@@ -343,12 +343,12 @@ export default function AdminPage() {
                   <label className="text-xs font-medium text-foreground">
                     Select File <span className="text-muted-foreground font-normal">(.pdf, .md, .txt, .jpeg, .png)</span> <span className="text-rose-500">*</span>
                   </label>
-                  <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
                     <input
                       type="file"
                       onChange={handleFileChange}
                       accept={ACCEPTED_EXTENSIONS}
-                      className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-amber-500/10 file:text-amber-500 hover:file:bg-amber-500/20"
+                      className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 dark:file:text-blue-400 hover:file:bg-blue-500/20"
                       required
                     />
                   </div>
@@ -359,7 +359,7 @@ export default function AdminPage() {
                   <label className="text-xs font-medium text-foreground">
                     Tags (Comma separated)
                   </label>
-                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
                     <Tag className="size-3.5 text-muted-foreground shrink-0" />
                     <input
                       type="text"
@@ -382,7 +382,7 @@ export default function AdminPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief summary of document content..."
                   rows={2}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none"
                 />
               </div>
 
@@ -406,7 +406,7 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={!selectedFile || isUploading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                 >
                   {isUploading ? (
                     <>
@@ -431,7 +431,7 @@ export default function AdminPage() {
                   <label className="text-xs font-medium text-foreground">
                     Document Filename <span className="text-rose-500">*</span>
                   </label>
-                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
                     <FileCode className="size-3.5 text-muted-foreground shrink-0" />
                     <input
                       type="text"
@@ -449,7 +449,7 @@ export default function AdminPage() {
                   <label className="text-xs font-medium text-foreground">
                     Tags (Comma separated)
                   </label>
-                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-amber-500">
+                  <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
                     <Tag className="size-3.5 text-muted-foreground shrink-0" />
                     <input
                       type="text"
@@ -472,7 +472,7 @@ export default function AdminPage() {
                   onChange={(e) => setMarkdownContent(e.target.value)}
                   placeholder="# Document Title&#10;&#10;Write your markdown knowledge article here..."
                   rows={6}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-amber-500 resize-y leading-relaxed"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-blue-500 resize-y leading-relaxed"
                   required
                 />
               </div>
@@ -487,7 +487,7 @@ export default function AdminPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Brief summary of markdown document..."
                   rows={2}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-amber-500 resize-none"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none"
                 />
               </div>
 
@@ -511,7 +511,7 @@ export default function AdminPage() {
                 <button
                   type="submit"
                   disabled={!markdownTitle.trim() || !markdownContent.trim() || isUploading}
-                  className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-zinc-950 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                 >
                   {isUploading ? (
                     <>
@@ -546,7 +546,7 @@ export default function AdminPage() {
                 placeholder="Search documents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-amber-500"
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-blue-500"
               />
             </div>
           </div>
@@ -554,7 +554,7 @@ export default function AdminPage() {
           <div className="divide-y divide-sidebar-border">
             {isLoadingDocs ? (
               <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                <RefreshCw className="size-4 animate-spin text-amber-500" />
+                <RefreshCw className="size-4 animate-spin text-blue-500" />
                 <span>Loading documents...</span>
               </div>
             ) : filteredDocs.length === 0 ? (
@@ -578,7 +578,7 @@ export default function AdminPage() {
                           doc.tags.map((tag, idx) => (
                             <span
                               key={idx}
-                              className="inline-flex items-center text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20"
+                              className="inline-flex items-center text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20"
                             >
                               #{tag}
                             </span>
@@ -601,7 +601,7 @@ export default function AdminPage() {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sidebar-border bg-background text-xs font-medium hover:bg-muted transition-colors cursor-pointer"
                       title="View document inline"
                     >
-                      <Eye className="size-3.5 text-amber-500" />
+                      <Eye className="size-3.5 text-blue-500" />
                       <span>View</span>
                     </button>
 
@@ -640,7 +640,7 @@ export default function AdminPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shrink-0">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 shrink-0">
                   {getFileIcon(viewingFile.content_type || "", viewingFile.filename)}
                 </div>
                 <div className="min-w-0">

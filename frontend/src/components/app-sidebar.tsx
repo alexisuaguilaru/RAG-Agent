@@ -293,7 +293,7 @@ export function AppSidebar() {
           )}
           title="RAG Document Admin Dashboard"
         >
-          <FolderKanban className="size-4 shrink-0 text-amber-500" />
+          <FolderKanban className="size-4 shrink-0 text-blue-600 dark:text-blue-400" />
           {!isCollapsed && (
             <span className="truncate font-semibold">RAG Documents Admin</span>
           )}

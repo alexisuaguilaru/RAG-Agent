@@ -16,7 +16,7 @@ export function ChatHeader({ onOpenAdmin, isConnected }: ChatHeaderProps) {
       <div className="flex items-center gap-3">
         <SidebarToggle />
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-amber-500 animate-pulse" />
+          <Sparkles className="size-4 text-blue-500 animate-pulse" />
           <span className="font-semibold text-sm text-foreground">RAG AI Assistant</span>
         </div>
       </div>
