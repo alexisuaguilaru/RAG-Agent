@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   FolderKanban,
@@ -15,18 +15,17 @@ import {
   AlertCircle,
   FileImage,
   FileCode,
+  Eye,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-interface DocumentItem {
-  id: string;
-  name: string;
-  mimeType: string;
-  size: string;
-  description: string;
-  tags: string[];
-  embeddingIds: string[];
-  uploadedAt: string;
+interface StoredEmbedFile {
+  file_id: string;
+  filename: string;
+  last_modification: string;
+  content_type: string;
+  description?: string;
+  tags?: string[];
 }
 
 const SUPPORTED_MIME_TYPES = [
@@ -37,23 +36,11 @@ const SUPPORTED_MIME_TYPES = [
   "application/pdf",
 ];
 
-const ACCEPTED_EXTENSIONS = ".md,.txt,.jpg,.jpeg,.png,.pdf";
-
-const INITIAL_DOCUMENTS: DocumentItem[] = [
-  {
-    id: "doc-sample-1",
-    name: "rag_architecture_spec.md",
-    mimeType: "text/markdown",
-    size: "142 KB",
-    description: "Decoupled RAG Agent system design specification and documentation.",
-    tags: ["architecture", "spec", "rag"],
-    embeddingIds: ["emb_a1b2c3d4", "emb_e5f6g7h8"],
-    uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-  },
-];
+const ACCEPTED_EXTENSIONS = ".md,.txt,.jpeg,.jpg,.png,.pdf";
 
 export default function AdminPage() {
-  const [documents, setDocuments] = useState<DocumentItem[]>(INITIAL_DOCUMENTS);
+  const [documents, setDocuments] = useState<StoredEmbedFile[]>([]);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [description, setDescription] = useState("");
@@ -62,44 +49,60 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [viewingFile, setViewingFile] = useState<StoredEmbedFile | null>(null);
 
-  // Load documents from localStorage on mount
-  useEffect(() => {
+  // Fetch real stored files from GET /api/documents (FastAPI http://localhost:6060/documents/)
+  const fetchDocuments = useCallback(async () => {
+    setIsLoadingDocs(true);
     try {
-      const saved = localStorage.getItem("rag_admin_documents");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setDocuments(parsed);
+      const res = await fetch("/api/documents");
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setDocuments(data);
         }
       }
     } catch {
-      // Fallback
+      // Ignore network errors
+    } finally {
+      setIsLoadingDocs(false);
     }
   }, []);
 
-  // Save documents to localStorage on change
   useEffect(() => {
-    try {
-      localStorage.setItem("rag_admin_documents", JSON.stringify(documents));
-    } catch {
-      // Fallback
-    }
-  }, [documents]);
+    fetchDocuments();
+  }, [fetchDocuments]);
+
+  // Close viewer modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && viewingFile) {
+        setViewingFile(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [viewingFile]);
 
   const filteredDocs = documents.filter(
     (doc) =>
-      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase()))
+      doc.filename.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (doc.description && doc.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (doc.tags && doc.tags.some((t) => t.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
       const file = files[0];
-      if (!SUPPORTED_MIME_TYPES.includes(file.type) && !file.name.endsWith(".md") && !file.name.endsWith(".txt")) {
-        setErrorMessage(`Unsupported format '${file.name}'. Supported formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png).`);
+      if (
+        !SUPPORTED_MIME_TYPES.includes(file.type) &&
+        !file.name.endsWith(".md") &&
+        !file.name.endsWith(".txt")
+      ) {
+        setErrorMessage(
+          `Unsupported format '${file.name}'. Supported formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png).`
+        );
         setSelectedFile(null);
         return;
       }
@@ -128,50 +131,21 @@ export default function AdminPage() {
 
       tagsList.forEach((tag) => formData.append("tags", tag));
 
-      let embeddingIds: string[] = [];
-      try {
-        const res = await fetch("/api/documents/create-embed", {
-          method: "POST",
-          body: formData,
-        });
+      const res = await fetch("/api/documents/create-embed", {
+        method: "POST",
+        body: formData,
+      });
 
-        if (res.ok) {
-          const data = await res.json();
-          embeddingIds = data.embeddingIds || [];
-        } else {
-          const count = selectedFile.type === "application/pdf" ? 3 : 1;
-          for (let i = 0; i < count; i++) {
-            embeddingIds.push(`emb_${Math.random().toString(36).substring(2, 10)}`);
-          }
-        }
-      } catch {
-        const count = selectedFile.type === "application/pdf" ? 3 : 1;
-        for (let i = 0; i < count; i++) {
-          embeddingIds.push(`emb_${Math.random().toString(36).substring(2, 10)}`);
-        }
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || errData.detail || "Failed to upload document");
       }
 
-      const formattedSize =
-        selectedFile.size > 1024 * 1024
-          ? `${(selectedFile.size / (1024 * 1024)).toFixed(1)} MB`
-          : `${(selectedFile.size / 1024).toFixed(0)} KB`;
-
-      const newDoc: DocumentItem = {
-        id: `doc-${Date.now()}`,
-        name: selectedFile.name,
-        mimeType: selectedFile.type || "application/octet-stream",
-        size: formattedSize,
-        description: description.trim() || "No description provided.",
-        tags: tagsList.length > 0 ? tagsList : ["general"],
-        embeddingIds,
-        uploadedAt: new Date().toISOString().slice(0, 16).replace("T", " "),
-      };
-
-      setDocuments((prev) => [newDoc, ...prev]);
       setSelectedFile(null);
       setDescription("");
       setTagsInput("");
-      setSuccessMessage(`Successfully uploaded '${newDoc.name}'!`);
+      setSuccessMessage(`Successfully uploaded '${selectedFile.name}' to RAG knowledge base!`);
+      await fetchDocuments();
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to upload document.");
     } finally {
@@ -179,35 +153,49 @@ export default function AdminPage() {
     }
   };
 
-  const handleDeleteDocument = async (doc: DocumentItem) => {
-    if (deletingId === doc.id) return;
-    setDeletingId(doc.id);
+  const handleDeleteDocument = async (fileId: string) => {
+    if (deletingId === fileId) return;
+    setDeletingId(fileId);
 
     try {
-      await fetch("/api/documents/delete-embed", {
+      const res = await fetch("/api/documents/delete-embed", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ embedding_ids: doc.embeddingIds }),
-      }).catch(() => {
-        // Fallback
+        body: JSON.stringify({ file_id: fileId }),
       });
 
-      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
-    } catch {
-      setDocuments((prev) => prev.filter((d) => d.id !== doc.id));
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || errData.detail || "Failed to delete file");
+      }
+
+      setDocuments((prev) => prev.filter((d) => d.file_id !== fileId));
+      if (viewingFile?.file_id === fileId) {
+        setViewingFile(null);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || "Failed to delete document");
     } finally {
       setDeletingId(null);
     }
   };
 
   const getFileIcon = (mimeType: string, name: string) => {
-    if (mimeType.startsWith("image/") || name.endsWith(".jpg") || name.endsWith(".png")) {
+    if (mimeType.startsWith("image/") || name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png")) {
       return <FileImage className="size-4 text-purple-500" />;
     }
     if (mimeType.includes("markdown") || name.endsWith(".md")) {
       return <FileCode className="size-4 text-blue-500" />;
     }
     return <FileText className="size-4 text-amber-500" />;
+  };
+
+  const formatDate = (isoString: string) => {
+    try {
+      return new Date(isoString).toLocaleString();
+    } catch {
+      return isoString;
+    }
   };
 
   return (
@@ -230,6 +218,14 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={fetchDocuments}
+            title="Refresh documents list"
+            className="p-2 rounded-lg border border-sidebar-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`size-4 ${isLoadingDocs ? "animate-spin" : ""}`} />
+          </button>
           <ThemeToggle />
         </div>
       </header>
@@ -362,50 +358,67 @@ export default function AdminPage() {
           </div>
 
           <div className="divide-y divide-sidebar-border">
-            {filteredDocs.length === 0 ? (
+            {isLoadingDocs ? (
+              <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                <RefreshCw className="size-4 animate-spin text-amber-500" />
+                <span>Loading documents...</span>
+              </div>
+            ) : filteredDocs.length === 0 ? (
               <div className="p-8 text-center text-xs text-muted-foreground">
                 No documents uploaded yet.
               </div>
             ) : (
               filteredDocs.map((doc) => (
                 <div
-                  key={doc.id}
+                  key={doc.file_id}
                   className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-6 py-4 hover:bg-muted/40 transition-colors gap-4 text-xs"
                 >
                   <div className="flex items-start gap-3 min-w-0 flex-1">
                     <div className="p-2.5 rounded-xl bg-muted text-foreground shrink-0 mt-0.5">
-                      {getFileIcon(doc.mimeType, doc.name)}
+                      {getFileIcon(doc.content_type || "", doc.filename)}
                     </div>
                     <div className="min-w-0 flex-1 space-y-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold text-foreground truncate">{doc.name}</span>
-                        <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium">
-                          {doc.size}
-                        </span>
-                        {doc.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
+                        <span className="font-semibold text-foreground truncate">{doc.filename}</span>
+                        {doc.tags &&
+                          doc.tags.map((tag, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-flex items-center text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20"
+                            >
+                              #{tag}
+                            </span>
+                          ))}
                       </div>
 
-                      <p className="text-muted-foreground text-xs line-clamp-1">{doc.description}</p>
-                      <p className="text-[11px] text-muted-foreground">Uploaded: {doc.uploadedAt}</p>
+                      {doc.description && (
+                        <p className="text-muted-foreground text-xs line-clamp-1">{doc.description}</p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground">
+                        Uploaded: {formatDate(doc.last_modification)}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                     <button
                       type="button"
-                      onClick={() => handleDeleteDocument(doc)}
-                      disabled={deletingId === doc.id}
+                      onClick={() => setViewingFile(doc)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sidebar-border bg-background text-xs font-medium hover:bg-muted transition-colors cursor-pointer"
+                      title="View document inline"
+                    >
+                      <Eye className="size-3.5 text-amber-500" />
+                      <span>View</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDocument(doc.file_id)}
+                      disabled={deletingId === doc.file_id}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 disabled:opacity-40 transition-colors cursor-pointer"
                       title="Delete document"
                     >
-                      {deletingId === doc.id ? (
+                      {deletingId === doc.file_id ? (
                         <RefreshCw className="size-3.5 animate-spin" />
                       ) : (
                         <Trash2 className="size-3.5" />
@@ -419,6 +432,74 @@ export default function AdminPage() {
           </div>
         </div>
       </main>
+
+      {/* Pop-up File Viewer Modal using /api/documents/{file_id} */}
+      {viewingFile && (
+        <div
+          onClick={() => setViewingFile(null)}
+          className="fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4 sm:p-6 cursor-pointer"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-4xl h-[85vh] flex flex-col rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden text-foreground cursor-default"
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-500 shrink-0">
+                  {getFileIcon(viewingFile.content_type || "", viewingFile.filename)}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-sm text-foreground truncate">{viewingFile.filename}</h3>
+                  {viewingFile.description ? (
+                    <p className="text-xs text-muted-foreground truncate">{viewingFile.description}</p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground font-mono">ID: {viewingFile.file_id}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Body: Streams document via GET /api/documents/[fileId] -> /documents/{file_id} */}
+            <div className="flex-1 w-full bg-white dark:bg-zinc-950 overflow-hidden relative flex items-center justify-center">
+              {viewingFile.content_type?.startsWith("image/") ||
+              viewingFile.filename.endsWith(".jpg") ||
+              viewingFile.filename.endsWith(".jpeg") ||
+              viewingFile.filename.endsWith(".png") ? (
+                <div className="p-4 flex items-center justify-center w-full h-full overflow-auto">
+                  <img
+                    src={`/api/documents/${viewingFile.file_id}`}
+                    alt={viewingFile.filename}
+                    className="max-h-full object-contain rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-md bg-white dark:bg-zinc-900"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={`/api/documents/${viewingFile.file_id}`}
+                  title={viewingFile.filename}
+                  className="w-full h-full border-0 bg-white dark:bg-zinc-950"
+                />
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-6 py-3 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shrink-0 text-xs">
+              <div className="flex items-center gap-2 text-muted-foreground font-mono text-[11px]">
+                <span>Document Viewer</span>
+                <span>•</span>
+                <span className="truncate max-w-[250px]">{viewingFile.filename}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingFile(null)}
+                className="px-4 py-2 rounded-xl bg-zinc-900 text-zinc-100 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200 font-semibold transition-colors cursor-pointer text-xs"
+              >
+                Close Viewer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

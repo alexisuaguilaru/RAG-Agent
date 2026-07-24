@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function DELETE(req: NextRequest) {
-  const ragApiUrl = process.env.RAG_API_URL || "http://localhost:8000";
+  const ragApiUrl = process.env.RAG_API_URL || "http://localhost:6060";
 
   try {
     const body = await req.json();
@@ -19,7 +19,7 @@ export async function DELETE(req: NextRequest) {
     if (!backendRes.ok) {
       const errorText = await backendRes.text();
       return NextResponse.json(
-        { error: errorText || "Failed to delete embeddings" },
+        { error: errorText || "Failed to delete file embeddings" },
         { status: backendRes.status }
       );
     }
@@ -28,7 +28,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "Unable to connect to RAG embedding API" },
+      { error: error.message || "Unable to connect to RAG API service" },
       { status: 503 }
     );
   }

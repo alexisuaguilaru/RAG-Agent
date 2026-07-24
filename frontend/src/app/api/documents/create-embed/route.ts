@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const ragApiUrl = process.env.RAG_API_URL || "http://localhost:8000";
+  const ragApiUrl = process.env.RAG_API_URL || "http://localhost:6060";
 
   try {
     const formData = await req.formData();
@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const embeddingIds: string[] = await backendRes.json();
-    return NextResponse.json({ embeddingIds });
+    const data = await backendRes.json();
+    return NextResponse.json(data);
   } catch (error: any) {
     return NextResponse.json(
-      { error: error.message || "Unable to connect to RAG embedding API" },
+      { error: error.message || "Unable to connect to RAG API service" },
       { status: 503 }
     );
   }
