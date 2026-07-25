@@ -12,12 +12,18 @@ export async function GET() {
     });
 
     if (!res.ok) {
-      return NextResponse.json([], { status: 200 });
+      return NextResponse.json(
+        { error: "RAG API returned error status" },
+        { status: res.status }
+      );
     }
 
     const data = await res.json();
     return NextResponse.json(data);
   } catch {
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json(
+      { error: "RAG API service unreachable" },
+      { status: 503 }
+    );
   }
 }

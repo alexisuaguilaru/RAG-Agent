@@ -53,20 +53,31 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<"upload" | "write">("upload");
   const [markdownTitle, setMarkdownTitle] = useState("");
   const [markdownContent, setMarkdownContent] = useState("");
+  const [isRagConnected, setIsRagConnected] = useState<boolean | null>(false);
 
   // Fetch real stored files from GET /api/documents (FastAPI http://localhost:6060/documents/)
   const fetchDocuments = useCallback(async () => {
     setIsLoadingDocs(true);
     try {
-      const res = await fetch("/api/documents");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
+      const res = await fetch("/api/documents", { signal: controller.signal });
+      clearTimeout(timeoutId);
+
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data)) {
           setDocuments(data);
+          setIsRagConnected(true);
+        } else {
+          setIsRagConnected(false);
         }
+      } else {
+        setIsRagConnected(false);
       }
     } catch {
-      // Ignore network errors
+      setIsRagConnected(false);
     } finally {
       setIsLoadingDocs(false);
     }
@@ -74,6 +85,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchDocuments();
+    const interval = setInterval(() => {
+      fetchDocuments();
+    }, 15000);
+    return () => clearInterval(interval);
   }, [fetchDocuments]);
 
   // Close viewer modal on Escape key press
@@ -273,6 +288,19 @@ export default function AdminPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* RAG API Connection Status Badge */}
+          {isRagConnected ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Connected</span>
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
+              <span className="size-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span>Disconnected</span>
+            </span>
+          )}
+
           <button
             type="button"
             onClick={fetchDocuments}
@@ -289,6 +317,13 @@ export default function AdminPage() {
       <main className="flex-1 max-w-4xl w-full mx-auto px-6 py-8 flex flex-col gap-6">
         {/* Upload Form Card */}
         <div className="rounded-2xl border border-sidebar-border bg-card p-6 shadow-xs flex flex-col gap-4">
+          {!isRagConnected && (
+            <div className="flex items-center gap-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-xs text-rose-600 dark:text-rose-400 font-medium">
+              <AlertCircle className="size-4 shrink-0" />
+              <span>RAG API service is currently offline (http://localhost:6060). Document upload, creation, and management are disabled.</span>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-sidebar-border pb-3 gap-3">
             <div className="flex items-center gap-2">
               <button
@@ -348,7 +383,8 @@ export default function AdminPage() {
                       type="file"
                       onChange={handleFileChange}
                       accept={ACCEPTED_EXTENSIONS}
-                      className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 dark:file:text-blue-400 hover:file:bg-blue-500/20"
+                      disabled={!isRagConnected || isUploading}
+                      className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 dark:file:text-blue-400 hover:file:bg-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
                       required
                     />
                   </div>
@@ -365,8 +401,9 @@ export default function AdminPage() {
                       type="text"
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="e.g. support, manual, policy"
-                      className="w-full bg-transparent focus:outline-none text-xs"
+                      disabled={!isRagConnected || isUploading}
+                      placeholder={!isRagConnected ? "RAG API Offline" : "e.g. support, manual, policy"}
+                      className="w-full bg-transparent focus:outline-none text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -380,9 +417,10 @@ export default function AdminPage() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief summary of document content..."
+                  disabled={!isRagConnected || isUploading}
+                  placeholder={!isRagConnected ? "RAG API Offline" : "Brief summary of document content..."}
                   rows={2}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -405,7 +443,7 @@ export default function AdminPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={!selectedFile || isUploading}
+                  disabled={!isRagConnected || !selectedFile || isUploading}
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                 >
                   {isUploading ? (
@@ -437,8 +475,9 @@ export default function AdminPage() {
                       type="text"
                       value={markdownTitle}
                       onChange={(e) => setMarkdownTitle(e.target.value)}
-                      placeholder="e.g. system_instructions.md"
-                      className="w-full bg-transparent focus:outline-none text-xs font-mono"
+                      disabled={!isRagConnected || isUploading}
+                      placeholder={!isRagConnected ? "RAG API Offline" : "e.g. system_instructions.md"}
+                      className="w-full bg-transparent focus:outline-none text-xs font-mono disabled:opacity-50 disabled:cursor-not-allowed"
                       required
                     />
                   </div>
@@ -455,8 +494,9 @@ export default function AdminPage() {
                       type="text"
                       value={tagsInput}
                       onChange={(e) => setTagsInput(e.target.value)}
-                      placeholder="e.g. guide, internal, faq"
-                      className="w-full bg-transparent focus:outline-none text-xs"
+                      disabled={!isRagConnected || isUploading}
+                      placeholder={!isRagConnected ? "RAG API Offline" : "e.g. guide, internal, faq"}
+                      className="w-full bg-transparent focus:outline-none text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                     />
                   </div>
                 </div>
@@ -470,9 +510,10 @@ export default function AdminPage() {
                 <textarea
                   value={markdownContent}
                   onChange={(e) => setMarkdownContent(e.target.value)}
-                  placeholder="# Document Title&#10;&#10;Write your markdown knowledge article here..."
+                  disabled={!isRagConnected || isUploading}
+                  placeholder={!isRagConnected ? "RAG API Offline" : "# Document Title\n\nWrite your markdown knowledge article here..."}
                   rows={6}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-blue-500 resize-y leading-relaxed"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-blue-500 resize-y leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
                   required
                 />
               </div>
@@ -485,9 +526,10 @@ export default function AdminPage() {
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief summary of markdown document..."
+                  disabled={!isRagConnected || isUploading}
+                  placeholder={!isRagConnected ? "RAG API Offline" : "Brief summary of markdown document..."}
                   rows={2}
-                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none"
+                  className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -510,7 +552,7 @@ export default function AdminPage() {
               <div className="flex justify-end">
                 <button
                   type="submit"
-                  disabled={!markdownTitle.trim() || !markdownContent.trim() || isUploading}
+                  disabled={!isRagConnected || !markdownTitle.trim() || !markdownContent.trim() || isUploading}
                   className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
                 >
                   {isUploading ? (
@@ -546,7 +588,8 @@ export default function AdminPage() {
                 placeholder="Search documents..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-blue-500"
+                disabled={!isRagConnected}
+                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -556,6 +599,11 @@ export default function AdminPage() {
               <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
                 <RefreshCw className="size-4 animate-spin text-blue-500" />
                 <span>Loading documents...</span>
+              </div>
+            ) : !isRagConnected ? (
+              <div className="p-8 text-center text-xs text-rose-500 dark:text-rose-400 flex items-center justify-center gap-2 font-medium">
+                <AlertCircle className="size-4 shrink-0 text-rose-500" />
+                <span>RAG API service is currently offline. Unable to retrieve documents.</span>
               </div>
             ) : filteredDocs.length === 0 ? (
               <div className="p-8 text-center text-xs text-muted-foreground">
@@ -598,7 +646,8 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => setViewingFile(doc)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sidebar-border bg-background text-xs font-medium hover:bg-muted transition-colors cursor-pointer"
+                      disabled={!isRagConnected}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sidebar-border bg-background text-xs font-medium hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="View document inline"
                     >
                       <Eye className="size-3.5 text-blue-500" />
@@ -608,8 +657,8 @@ export default function AdminPage() {
                     <button
                       type="button"
                       onClick={() => handleDeleteDocument(doc.file_id)}
-                      disabled={deletingId === doc.file_id}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 disabled:opacity-40 transition-colors cursor-pointer"
+                      disabled={!isRagConnected || deletingId === doc.file_id}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                       title="Delete document"
                     >
                       {deletingId === doc.file_id ? (
