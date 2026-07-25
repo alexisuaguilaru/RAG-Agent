@@ -1,21 +1,9 @@
 # IDE & System files
-.git
-.gitignore
-.vscode
 README.md
 todo.md
 
 # Environment files
 .env*
-
-# Python / Pycache
-__pycache__
-*.pyc
-*.pyo
-*.pyd
-.pytest_cache
-.venv
-venv
 
 # Node / Next.js
 node_modules

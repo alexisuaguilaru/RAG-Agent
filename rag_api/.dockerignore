@@ -1,0 +1,16 @@
+# IDE & System files
+.gitignore
+README.md
+todo.md
+
+# Environment files
+.env*
+
+# Python / Pycache
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.venv
+venv
