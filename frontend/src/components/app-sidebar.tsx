@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 
+import { bannerConfig } from "@/config/banner.config";
+
 interface ThreadItem {
   id: string;
   title: string;
@@ -104,9 +106,17 @@ export function AppSidebar() {
     setEditingTitle(thread.title);
   };
 
+  const handleCancelRename = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingThreadId(null);
+    setEditingTitle("");
+  };
+
   const handleSaveRename = async (e: React.FormEvent | React.MouseEvent, threadId: string) => {
     e.preventDefault();
     e.stopPropagation();
+
     if (!editingTitle.trim()) return;
 
     try {
@@ -115,6 +125,7 @@ export function AppSidebar() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: editingTitle.trim() }),
       });
+
       if (res.ok) {
         setThreads((prev) =>
           prev.map((t) => (t.id === threadId ? { ...t, title: editingTitle.trim() } : t))
@@ -124,39 +135,40 @@ export function AppSidebar() {
       console.error("Failed to rename thread:", err);
     } finally {
       setEditingThreadId(null);
+      setEditingTitle("");
     }
-  };
-
-  const handleCancelRename = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setEditingThreadId(null);
   };
 
   return (
     <Sidebar collapsible="icon" className="border-r bg-sidebar">
-      <SidebarHeader className="py-4 border-b border-sidebar-border px-3 overflow-hidden">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
+      {/* Clickable Image Banner Sidebar Header */}
+      <SidebarHeader className="p-2.5 pb-1 overflow-hidden">
+        <a
+          href={bannerConfig.targetUrl || "#"}
+          target={bannerConfig.openInNewTab ? "_blank" : "_self"}
+          rel={bannerConfig.openInNewTab ? "noopener noreferrer" : undefined}
+          className={cn(
+            "block w-full overflow-hidden rounded-xl transition-all hover:opacity-90 active:scale-[0.98] cursor-pointer shadow-xs",
+            isCollapsed && "size-9 p-0 flex items-center justify-center rounded-lg mx-auto"
+          )}
+          title={bannerConfig.altText || `Go to ${bannerConfig.targetUrl}`}
+        >
+          {bannerConfig.imageUrl ? (
+            <img
+              src={bannerConfig.imageUrl}
+              alt={bannerConfig.altText}
               className={cn(
-                "w-full justify-start gap-3 select-none px-2",
-                isCollapsed && "justify-center px-0"
+                "w-full h-full object-cover rounded-xl block",
+                isCollapsed && "size-8 rounded-lg object-cover"
               )}
-            >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shrink-0">
-                <Bot className="size-5" />
-              </div>
-              {!isCollapsed && (
-                <div className="flex flex-col gap-0.5 leading-none truncate">
-                  <span className="font-semibold text-foreground truncate">AI Chatbot</span>
-                  <span className="text-xs text-muted-foreground text-left truncate">Aegra Threads</span>
-                </div>
-              )}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+            />
+          ) : (
+            <div className="flex items-center justify-center gap-2 p-2.5 text-xs font-semibold text-primary">
+              <Bot className="size-4 shrink-0" />
+              {!isCollapsed && <span className="truncate">RAG AI Agent</span>}
+            </div>
+          )}
+        </a>
       </SidebarHeader>
       
       <SidebarContent>
