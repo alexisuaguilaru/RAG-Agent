@@ -136,7 +136,7 @@ export function Message({
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="underline text-blue-600 hover:text-blue-700 font-medium"
+                  className="underline text-secondary hover:opacity-80 font-medium"
                 >
                   {children}
                 </a>

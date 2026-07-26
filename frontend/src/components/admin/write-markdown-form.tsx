@@ -80,7 +80,7 @@ export function WriteMarkdownForm({
           <label className="text-xs font-medium text-foreground">
             Document Filename <span className="text-rose-500">*</span>
           </label>
-          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
+          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-primary">
             <FileCode className="size-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -99,7 +99,7 @@ export function WriteMarkdownForm({
           <label className="text-xs font-medium text-foreground">
             Tags (Comma separated)
           </label>
-          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
+          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-primary">
             <Tag className="size-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -124,7 +124,7 @@ export function WriteMarkdownForm({
           disabled={!isRagConnected || isUploading}
           placeholder={!isRagConnected ? "RAG API Offline" : "# Document Title\n\nWrite your markdown knowledge article here..."}
           rows={6}
-          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-blue-500 resize-y leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs font-mono focus:outline-none focus:border-primary resize-y leading-relaxed disabled:opacity-50 disabled:cursor-not-allowed"
           required
         />
       </div>
@@ -140,7 +140,7 @@ export function WriteMarkdownForm({
           disabled={!isRagConnected || isUploading}
           placeholder={!isRagConnected ? "RAG API Offline" : "Brief summary of markdown document..."}
           rows={2}
-          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-primary resize-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -164,7 +164,7 @@ export function WriteMarkdownForm({
         <button
           type="submit"
           disabled={!isRagConnected || !markdownTitle.trim() || !markdownContent.trim() || isUploading}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl bg-accent text-accent-foreground border border-accent-foreground/30 px-4 py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
         >
           {isUploading ? (
             <>

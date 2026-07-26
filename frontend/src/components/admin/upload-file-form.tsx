@@ -90,13 +90,13 @@ export function UploadFileForm({
           <label className="text-xs font-medium text-foreground">
             Select File <span className="text-muted-foreground font-normal">(.pdf, .md, .txt, .jpeg, .png)</span> <span className="text-rose-500">*</span>
           </label>
-          <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
+          <div className="relative flex items-center rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-accent-foreground/50">
             <input
               type="file"
               onChange={handleFileChange}
               accept={ACCEPTED_EXTENSIONS}
               disabled={!isRagConnected || isUploading}
-              className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-500/10 file:text-blue-600 dark:file:text-blue-400 hover:file:bg-blue-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full text-xs cursor-pointer file:mr-3 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-accent file:text-accent-foreground hover:file:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
               required
             />
           </div>
@@ -107,7 +107,7 @@ export function UploadFileForm({
           <label className="text-xs font-medium text-foreground">
             Tags (Comma separated)
           </label>
-          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-blue-500">
+          <div className="flex items-center gap-2 rounded-xl border border-sidebar-border bg-background px-3 py-2 text-xs focus-within:border-accent-foreground/50">
             <Tag className="size-3.5 text-muted-foreground shrink-0" />
             <input
               type="text"
@@ -132,7 +132,7 @@ export function UploadFileForm({
           disabled={!isRagConnected || isUploading}
           placeholder={!isRagConnected ? "RAG API Offline" : "Brief summary of document content..."}
           rows={2}
-          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-blue-500 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full rounded-xl border border-sidebar-border bg-background p-3 text-xs focus:outline-none focus:border-accent-foreground/50 resize-none disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
 
@@ -156,7 +156,7 @@ export function UploadFileForm({
         <button
           type="submit"
           disabled={!isRagConnected || !selectedFile || isUploading}
-          className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl bg-accent text-accent-foreground border border-accent-foreground/30 px-4 py-2 text-xs font-semibold hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
         >
           {isUploading ? (
             <>

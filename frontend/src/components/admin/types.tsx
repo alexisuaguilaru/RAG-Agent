@@ -30,9 +30,9 @@ export const getFileIcon = (mimeType: string, name: string) => {
     return <FileImage className="size-4 text-purple-500" />;
   }
   if (mimeType.includes("markdown") || name.endsWith(".md")) {
-    return <FileCode className="size-4 text-blue-500" />;
+    return <FileCode className="size-4 text-secondary" />;
   }
-  return <FileText className="size-4 text-blue-500" />;
+  return <FileText className="size-4 text-secondary" />;
 };
 
 export const formatDate = (isoString: string) => {

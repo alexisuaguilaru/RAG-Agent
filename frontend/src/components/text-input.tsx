@@ -126,7 +126,7 @@ export function TextInput({
             <button
               type="submit"
               disabled={!input.trim() || isDisabled}
-              className="absolute right-2.5 flex h-8 w-8 items-center justify-center rounded-xl bg-foreground text-background hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
+              className="absolute right-2.5 flex h-8 w-8 items-center justify-center rounded-xl bg-accent text-accent-foreground border border-accent-foreground/20 hover:opacity-90 disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer shadow-xs"
             >
               <ArrowUp className="size-4" />
             </button>

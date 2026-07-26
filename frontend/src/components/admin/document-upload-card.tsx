@@ -34,7 +34,7 @@ export function DocumentUploadCard({
             onClick={() => setActiveTab("upload")}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === "upload"
-                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                ? "bg-accent text-accent-foreground border border-accent-foreground/20"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
             }`}
           >
@@ -46,7 +46,7 @@ export function DocumentUploadCard({
             onClick={() => setActiveTab("write")}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
               activeTab === "write"
-                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20"
+                ? "bg-accent text-accent-foreground border border-accent-foreground/20"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground border border-transparent"
             }`}
           >
@@ -56,7 +56,7 @@ export function DocumentUploadCard({
         </div>
 
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2.5 py-1 rounded-md">
+          <span className="text-[10px] font-medium text-accent-foreground bg-accent border border-accent-foreground/20 px-2.5 py-1 rounded-md">
             {activeTab === "upload"
               ? "Supported Formats: PDF (.pdf), Markdown (.md), Text (.txt), JPEG (.jpeg), PNG (.png)"
               : "Markdown Document (.md)"}

@@ -47,7 +47,7 @@ export function DocumentList({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             disabled={!isRagConnected}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-sidebar-border bg-background focus:outline-none focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
           />
         </div>
       </div>
@@ -55,7 +55,7 @@ export function DocumentList({
       <div className="divide-y divide-sidebar-border">
         {isLoadingDocs ? (
           <div className="p-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-            <RefreshCw className="size-4 animate-spin text-blue-500" />
+            <RefreshCw className="size-4 animate-spin text-primary" />
             <span>Loading documents...</span>
           </div>
         ) : !isRagConnected ? (
@@ -84,7 +84,7 @@ export function DocumentList({
                       doc.tags.map((tag, idx) => (
                         <span
                           key={idx}
-                          className="inline-flex items-center text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-500/20"
+                          className="inline-flex items-center text-[10px] font-medium bg-accent text-accent-foreground px-2 py-0.5 rounded-full border border-accent-foreground/20"
                         >
                           #{tag}
                         </span>
@@ -108,7 +108,7 @@ export function DocumentList({
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-sidebar-border bg-background text-xs font-medium hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
                   title="View document inline"
                 >
-                  <Eye className="size-3.5 text-blue-500" />
+                  <Eye className="size-3.5 text-secondary" />
                   <span>View</span>
                 </button>
 

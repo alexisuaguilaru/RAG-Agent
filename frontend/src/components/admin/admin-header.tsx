@@ -28,7 +28,7 @@ export function AdminHeader({
         </Link>
         <div className="h-4 w-px bg-sidebar-border" />
         <div className="flex items-center gap-2">
-          <FolderKanban className="size-5 text-blue-600 dark:text-blue-400" />
+          <FolderKanban className="size-5 text-primary" />
           <h1 className="font-semibold text-base tracking-tight">RAG Document Management</h1>
         </div>
       </div>

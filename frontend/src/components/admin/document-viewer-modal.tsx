@@ -37,7 +37,7 @@ export function DocumentViewerModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 shrink-0">
+            <div className="p-2.5 rounded-xl bg-accent text-accent-foreground shrink-0">
               {getFileIcon(viewingFile.content_type || "", viewingFile.filename)}
             </div>
             <div className="min-w-0">
