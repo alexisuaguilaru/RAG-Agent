@@ -103,11 +103,11 @@ uv pip install -r requirements.txt
 ```
 
 ### Testing and Deployment Stage
+Copy and modify the values of `.env.example`, considering that every service has an README file (in its folder) which explains how to modify its env vars values:
 ```bash
 cp .env.example .env
 ```
-Set the `HF_TOKEN`, `TOKEN_CHROMA`, `GARAGE_*` and `JWT_SECRET` values.
-
+Then, up the docker services:
 ```bash
 docker compose up
 ```

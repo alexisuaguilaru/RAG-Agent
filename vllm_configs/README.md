@@ -1,2 +1,5 @@
 ## vLLM Configuration Files
 Each file in this folder contains the basic configuration used to develop the RAG agent locally during the development stage, under constraints on computing resources (16GB RAM + 6GB VRAM).
+
+### Env Vars
+* `HF_TOKEN`: Hugging Face token to allow a better model download

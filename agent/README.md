@@ -3,6 +3,11 @@ Based on the template provided by Aegra commands, this folder contains the sourc
 
 This component is highly customizable to meet your requirements. In general, the agent's harness (tools, skills, and MCP) is the most relevant part to modify in order to change the agent's behavior. 
 
+### Env Vars
+* `POSTGRES_USER`: User for connecting to the DB
+* `POSTGRES_PASSWORD`: Password to validate the user in the DB
+* `AUTH_TYPE`: [Authentication method](https://docs.aegra.dev/guides/authentication)
+
 ### Memory & State
 To change how the agent behaves and what metadata it has access to, modify the context (metadata passed during the agent's invocation) and state (mutable information across the agent's execution) schemas defined in the [`./src/memory/`](./src/memory/) folder. 
 
