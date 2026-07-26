@@ -106,16 +106,16 @@ uv pip install -r requirements.txt
 ```bash
 cp .env.example .env
 ```
-Set the `HF_TOKEN` and `TOKEN_CHROMA` values.
+Set the `HF_TOKEN`, `TOKEN_CHROMA`, `GARAGE_*` and `JWT_SECRET` values.
 
 ```bash
 docker compose up
 ```
 
 ### Web Interface
-This project has a UI to interact with the RAG agent based on Next.js (React) and was developed enterily using Antigravity (Gemini 3.5 Flash). Follow the instructions in [README.md](./frontend/README.md) to run it and test the agent. 
+This project has a UI to interact with the RAG agent based on Next.js (React) and was developed enterily using Antigravity (Gemini 3.5 Flash and Gemini 3.6 Flash). Follow the instructions in [README.md](./frontend/README.md) to run it and test the agent. This UI can be customized by changing the colors, favicon and banner. 
 
-Also you can use [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
+You can also use the [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
 
 ## Run Tests
 To execute the basic, initial tests, use the next command:
