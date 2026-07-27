@@ -1,6 +1,8 @@
 # RAG Agent
 An initial solution to develop a multimodal RAG agent built on the LangChain ecosystem using local, open-weights models. This system provides an API for the RAG and agent compatible with the LangGraph SDK.
 
+This project also includes a minimal frontend built on Next.js to interact with the RAG (both chat and add documents).
+
 ## Project Structure
 ```bash
 ├── docker-compose.yml      # Orchestration of the containers
@@ -137,5 +139,20 @@ Alexis Aguilar [Student of Bachelor's Degree in "Tecnologías para la Informaci�
 
 Project developed as component for my Bachelor's thesis: "Desarrollo de un Agente de Inteligencia Artificial para Optimizar el Trámite de Titulación para los Estudiantes de la [ENES Unidad Morelia](https://www.enesmorelia.unam.mx/)".
 
-## License
+## Project License
 Project under [MIT License](LICENSE)
+
+## Tech Licenses
+* [ChromaDB](https://github.com/chroma-core/chroma): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+* [Garage](https://github.com/deuxfleurs-org/garage): [AGPL-3.0 license](https://opensource.org/license/gpl-3.0)
+* [PostgreSQL](https://github.com/postgres/postgres): [PostgreSQL License](https://opensource.org/license/postgresql)
+* [Redis](https://github.com/redis/redis): [RSALv2](https://redis.io/legal/rsalv2-agreement/)
+* [vLLM](https://github.com/vllm-project/vllm): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+  * [Qwen/Qwen3-VL-Embedding-2B](https://huggingface.co/Qwen/Qwen3-VL-Embedding-2B): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+  * [Qwen/Qwen3-VL-Reranker-2B](https://huggingface.co/Qwen/Qwen3-VL-Reranker-2B): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+* [llama.cpp](https://github.com/ggml-org/llama.cpp): [MIT License](https://opensource.org/license/mit)
+  * [Qwen/Qwen3.5-4B](https://huggingface.co/Qwen/Qwen3.5-4B): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+* [FastAPI](https://github.com/fastapi/fastapi): [MIT License](https://opensource.org/license/mit)
+* [LangChain](https://github.com/langchain-ai/langchain): [MIT License](https://opensource.org/license/mit)
+* [Aegra](https://github.com/aegra/aegra): [Apache-2.0 license](https://www.apache.org/licenses/LICENSE-2.0)
+* [Next.js](https://github.com/vercel/next.js): [MIT License](https://opensource.org/license/mit)
