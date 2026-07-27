@@ -43,7 +43,7 @@ async def embed_file(
     
     try:
         content_blocks = await file_processor(file)
-    except:
+    except Exception as e:
         raise HTTPException(
             status_code = status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail = "File format not supported.",

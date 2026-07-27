@@ -12,6 +12,7 @@ COPY --from=docker.io/astral/uv:0.11.27 /uv /bin/
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    poppler-utils \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

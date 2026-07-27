@@ -3,6 +3,8 @@ Based on a template to develop an API following clean architecture principles, t
 
 ### Endpoints
 * `GET /health`: Check if the service is healthy
+* `GET /documents`: List the embedded documents in the object storage
+* `GET /documents/{file_id}`: Get a specific embedded file to view 
 * `POST /documents/create-embed`: Add a file to store it in the vector database as an embedding vector, and return a list of IDs of each vector added
 * `DELETE /documents/delete-embed`: Delete a list of embedding IDs (can be associated to different files) from the vector database
 * `POST /query/search`: Search, rerank, and return similar documents/files based on the user's query

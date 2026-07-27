@@ -18,6 +18,7 @@ An initial solution to develop a multimodal RAG agent built on the LangChain eco
 │   ├── processors
 │   ├── schemas
 │   └── services
+├── frontend                # Frontend (Chat UI) code
 ├── tests                   # Initial unit tests for the system
 └── vllm_configs            # vLLM configurations for embedding and reranker models 
 ```
@@ -35,35 +36,35 @@ flowchart RL
         langchain_vector_store[Vector Store]
         service_reranker[[Reranker]]
         service_embedding[[Embedding]]
+        vector_db[(ChromaDB)]
+        object_s3[(Garage)]
 
         rag_api -- service --> langchain_retriever & langchain_vector_store
+        rag_api  -- service, list docs ----> object_s3
         langchain_retriever -. get docs .-> langchain_vector_store
         langchain_vector_store -- emb docs --> service_embedding
         langchain_vector_store -- query docs --> vector_db 
         langchain_retriever -- score docs ---> service_reranker
     end 
 
-    vector_db[(ChromaDB)]
-
     subgraph "Aegra Service"
-       aegra_api([Entrypoint])
-       langchain_agent[Agent]
-       agent_tools[[Tools]]
-       chat_model[[Chat Model]]
+        aegra_api([Entrypoint])
+        langchain_agent[Agent]
+        agent_tools[[Tools]]
+        chat_model[[Chat Model]]
+        sql_db[(Postgres)]
 
-       aegra_api -- service --> langchain_agent
-       aegra_api -- query threads --> sql_db
-       langchain_agent -. query messages .-> sql_db
-       langchain_agent -- tool callings --> agent_tools
-       langchain_agent -- chat --> chat_model
+        aegra_api -- service --> langchain_agent
+        aegra_api -- query threads --> sql_db
+        langchain_agent -. query messages .-> sql_db
+        langchain_agent -- tool callings --> agent_tools
+        langchain_agent -- chat --> chat_model
 
-       agent_tools -- request --> rag_api
+        agent_tools -- request --> rag_api
     end
 
     frontend -- request --> aegra_api --> redis_db -. streaming .-> frontend
     frontend -- request --> rag_api
-
-    sql_db[(Postgres)]
 ```
 * Both embedding and reranker models are served using vLLM running on a GPU, and the chat model is served using llama-cpp running on a CPU. 
 * Both the RAG and agent are developed with Python and LangChain.
@@ -79,6 +80,7 @@ Every folder (except for `tests`) has a README file that briefly explains the pu
 * [Redis](https://github.com/redis/redis)
 * [Postgres](https://github.com/postgres/postgres)
 * [ChromaDB](https://github.com/chroma-core/chroma)
+* [Garage](https://github.com/deuxfleurs-org/garage)
 
 ## RAG Pipeline
 Every file to embed (requested by the `/documents/create-embed` endpoint) is processed based on its MIME type:
@@ -107,13 +109,20 @@ Copy and modify the values of `.env.example`, considering that every service has
 ```bash
 cp .env.example .env
 ```
+
 Then, up the docker services:
 ```bash
 docker compose up
 ```
 
+Navigate to the following URL: [http://localhost:3000](http://localhost:3000)
+
 ### Web Interface
 This project has a UI to interact with the RAG agent based on Next.js (React) and was developed enterily using Antigravity (Gemini 3.5 Flash and Gemini 3.6 Flash). Follow the instructions in [README.md](./frontend/README.md) to run it and test the agent. This UI can be customized by changing the colors, favicon and banner. 
+
+The current UI looks like:
+![ui chat example](./assets/frontend-chat.png)
+![ui rag documents](./assets/frontend-rag.png)
 
 You can also use the [Agent Chat UI](https://github.com/langchain-ai/agent-chat-ui) by LangChain. Set the API URL to point at `http://localhost:2026` and the assistant ID equal to `rag_agent`.
 
