@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import List
 
 from fastapi import UploadFile
@@ -35,12 +36,16 @@ async def upload_embed_file(
     file_stream = file.file
     file_stream.seek(0)
     file_id = _get_file_id(file)
+    
+    filename = _convert_to_ascii_string(file.filename)
+    description = _convert_to_ascii_string(description)
+    tags = list(map(_convert_to_ascii_string, tags))
 
     extra_args = {
         "ContentType": file.content_type,
         "ContentDisposition": "inline",
         "Metadata": {
-            "filename": file.filename,
+            "filename": filename,
             "description": description,
             "tags": _stringify_list(tags),
             "embedding_ids": _stringify_list(embedding_ids),
@@ -130,9 +135,17 @@ def _get_file_id(
     """
 
     filename = file.filename
-    filename = filename.lower()
-    filename = filename.replace(" ", "-")
-    return filename
+    file_id = filename.replace(" ", "-")
+    return file_id
+
+def _convert_to_ascii_string(
+        utf_string: str
+    ) -> str:
+    """
+    Function to convert a non-ascii string (normally UTF-8) to an ascii string.
+    """
+
+    return urllib.parse.quote(utf_string)
 
 def _stringify_list(
         items: List[str]

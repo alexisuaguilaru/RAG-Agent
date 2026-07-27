@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import List, Any
 
 from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
@@ -18,13 +19,18 @@ def clean_file_object_data(
         clean_file_object (dict[str, Any]): Dictionary with the extracted and processed fields of a object file
     """
 
+    filename = urllib.parse.unquote(file_object["Metadata"]["filename"])
+    description = urllib.parse.unquote(file_object["Metadata"]["description"])
+    tags = map(urllib.parse.unquote, file_object["Metadata"]["tags"].split(","))
+    tags = list(tags)
+
     return {
         "file_id": file_object["Key"],
-        "filename": file_object["Metadata"]["filename"],
+        "filename": filename,
         "last_modification": file_object["LastModified"],
         "content_type": file_object["ContentType"],
-        "description": file_object["Metadata"]["description"],
-        "tags": file_object["Metadata"]["tags"].split(","),
+        "description": description,
+        "tags": tags,
     }
 
 def get_stream_headers(
