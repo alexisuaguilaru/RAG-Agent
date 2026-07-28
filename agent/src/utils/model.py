@@ -22,6 +22,8 @@ def load_chat_model() -> BaseChatModel:
         extra_body = {
             "chat_template_kwargs": {"enable_thinking": False}
         },
+        timeout = None,
+        stream_chunk_timeout = None,
     )
 
     return chat_model

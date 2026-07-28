@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { Client } from "@langchain/langgraph-sdk";
 
 export const runtime = "nodejs";
+export const maxDuration = 600; // Extend route max execution timeout to 10 minutes
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     // Derive or fetch thread_id securely
     const activeThreadId = threadId || `${userId}_default_thread`;
-    
+
     // Ensure thread exists or retrieve it
     try {
       await client.threads.get(activeThreadId);
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
             // Only handle partial message streaming events
             if (chunk.event === "messages/partial" || (chunk as any).event === "messages") {
               const data = chunk.data as any;
-              
+
               const extractText = (msgContent: any): string => {
                 if (typeof msgContent === "string") return msgContent;
                 if (Array.isArray(msgContent)) {
