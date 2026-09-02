@@ -4,10 +4,12 @@ from pydantic import SecretStr
 class Settings(BaseSettings):
     EMBEDDING_SERVICE_URL: str = "http://127.0.0.1:8001"
     EMBEDDING_SERVICE_APIKEY: SecretStr = "EMPTY"
+    EMBEDDING_MODEL: str = ""
     EMBEDDING_BATCH_SIZE: int = 5
 
     RERANKER_SERVICE_URL: str = "http://127.0.0.1:8002"
     RERANKER_SERVICE_APIKEY: SecretStr = "EMPTY"
+    RERANKER_MODEL: str = ""
 
     S3_HOST: str = "127.0.0.1"
     S3_PORT: int = 3900

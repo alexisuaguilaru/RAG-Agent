@@ -16,7 +16,7 @@ class EmbeddingModel(Embeddings):
             api_key = settings.EMBEDDING_SERVICE_APIKEY.get_secret_value(),
         )
 
-        self._model_embedding = self._client_embedding.models.list().data[0]['id']
+        self._model_embedding = settings.EMBEDDING_MODEL or self._client_embedding.models.list().data[0]['id']
 
     def embed_documents(
             self, 
