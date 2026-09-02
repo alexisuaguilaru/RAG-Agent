@@ -17,8 +17,8 @@ def get_object_storage() -> S3Client:
         "s3",
         endpoint_url = s3_endpoint,
         region_name = "garage",
-        aws_access_key_id = settings.AWS_ID,
-        aws_secret_access_key = settings.AWS_SECRET,
+        aws_access_key_id = settings.AWS_ID.get_secret_value(),
+        aws_secret_access_key = settings.AWS_SECRET.get_secret_value(),
     )
     
     return object_storage

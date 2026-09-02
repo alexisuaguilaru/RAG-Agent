@@ -13,7 +13,7 @@ class EmbeddingModel(Embeddings):
     def __init__(self):
         self._client_embedding = ClientV2(
             base_url = settings.EMBEDDING_SERVICE_URL,
-            api_key = settings.EMBEDDING_SERVICE_APIKEY,
+            api_key = settings.EMBEDDING_SERVICE_APIKEY.get_secret_value(),
         )
 
         self._model_embedding = self._client_embedding.models.list().data[0]['id']

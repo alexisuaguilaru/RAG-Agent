@@ -17,7 +17,7 @@ def get_vector_store() -> VectorStore:
         embedding_function = EmbeddingModel(),
         host = settings.CHROMA_HOST,
         port = settings.CHROMA_PORT,
-        headers = {'X-Chroma-Token': settings.CHROMA_TOKEN},
+        headers = {'X-Chroma-Token': settings.CHROMA_TOKEN.get_secret_value()},
         collection_name = "rag_collection",
         create_collection_if_not_exists = True,
         collection_metadata = {"hnsw:space": "cosine"},

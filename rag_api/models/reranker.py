@@ -16,7 +16,7 @@ class RerankerModel(BaseDocumentCompressor):
     def __init__(self):
         self._client_reranker = ClientV2(
             base_url = settings.RERANKER_SERVICE_URL,
-            api_key = settings.RERANKER_SERVICE_APIKEY,
+            api_key = settings.RERANKER_SERVICE_APIKEY.get_secret_value(),
         )
 
         self._model_reranker = self._client_reranker.models.list().data[0]['id']
