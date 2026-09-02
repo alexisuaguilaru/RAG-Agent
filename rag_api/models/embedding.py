@@ -16,7 +16,10 @@ class EmbeddingModel(Embeddings):
             api_key = settings.EMBEDDING_SERVICE_APIKEY.get_secret_value(),
         )
 
-        self._model_embedding = settings.EMBEDDING_MODEL or self._client_embedding.models.list().data[0]['id']
+        try:
+            self._model_embedding = settings.EMBEDDING_MODEL or self._client_embedding.models.list().data[0]['id']
+        except:
+            raise Exception("Embedding model service not available")
 
     def embed_documents(
             self, 

@@ -19,7 +19,10 @@ class RerankerModel(BaseDocumentCompressor):
             api_key = settings.RERANKER_SERVICE_APIKEY.get_secret_value(),
         )
 
-        self._model_reranker = settings.RERANKER_MODEL or self._client_reranker.models.list().data[0]['id']
+        try:
+            self._model_reranker = settings.RERANKER_MODEL or self._client_reranker.models.list().data[0]['id']
+        except:
+            raise Exception("Reranker model service not available")
 
     def compress_documents(
             self,

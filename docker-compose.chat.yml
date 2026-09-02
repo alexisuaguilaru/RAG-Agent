@@ -1,0 +1,135 @@
+name: rag-agent
+
+services:
+    frontend-service:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: frontend-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -sf http://localhost:3000/api/health || exit 1" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        depends_on:
+            aegra-service:
+                condition: service_healthy
+
+        environment:
+            - AEGRA_API_URL=http://aegra-service:2026
+            - AEGRA_ASSISTANT_ID=rag_agent
+            - JWT_SECRET=${JWT_SECRET:-super-secret-key}
+            - RAG_API_URL=http://rag-api:6060
+            - PORT=3000
+
+        ports:
+            - "3000:3000"
+
+    aegra-service:
+        build:
+            context: ./agent
+            dockerfile: Dockerfile
+        container_name: aegra-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -sf http://localhost:${PORT:-2026}/health || exit 1" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        depends_on:
+            chat-service:
+                condition: service_healthy
+            postgres-db:
+                condition: service_healthy
+            redis-db:
+                condition: service_healthy
+
+        environment:
+            - CHAT_SERVICE_URL=${CHAT_SERVICE_URL}
+            - CHAT_SERVICE_APIKEY=${CHAT_SERVICE_APIKEY}
+            - CHAT_MODEL=${CHAT_MODEL}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_HOST=postgres-db
+            - POSTGRES_DB=agent_db
+            - AEGRA_CONFIG=aegra.json
+            - AUTH_TYPE=${AUTH_TYPE:-noop}
+            - PORT=2026
+            - REDIS_BROKER_ENABLED=true
+            - REDIS_URL=redis://redis-db:6379/0
+
+        volumes:
+            - ./agent/src:/app/src:ro
+            - ./agent/aegra.json:/app/aegra.json:ro
+
+        ports:
+            - "2026:2026"
+
+    chat-service:
+        image: ghcr.io/ggml-org/llama.cpp:server
+        container_name: chat-service
+
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+            start_period: 10s
+
+        environment:
+            - HF_TOKEN=${HF_TOKEN}
+            - HF_HOME=/models/.cache
+            - OMP_NUM_THREADS=-1
+
+        volumes:
+            - ~/.cache/llama-cpp:/models
+
+        ports:
+            - "8000:8000"
+
+        command: >
+            --hf-repo unsloth/Qwen3.5-2B-MTP-GGUF --hf-file Qwen3.5-2B-UD-Q8_K_XL.gguf -c 0 -b 2048 -ub 2048 --tools all -ngl 0 -t 8 --port 8000 --host 0.0.0.0 --no-ui
+
+    redis-db:
+        image: redis:8.8-alpine
+        container_name: redis-db
+
+        healthcheck:
+            test: redis-cli ping
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        volumes:
+            - redis_data:/data
+
+        ports:
+            - "6379:6379"
+
+    postgres-db:
+        image: pgvector/pgvector:pg17
+        container_name: postgres-db
+
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=agent_db
+
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+        ports:
+            - "5432:5432"
+
+volumes:
+    postgres_data:
+    redis_data:
