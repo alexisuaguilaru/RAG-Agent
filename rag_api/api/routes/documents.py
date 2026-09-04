@@ -49,7 +49,7 @@ async def embed_file(
             detail = "File format not supported.",
         )
     
-    content_blocks = get_formatted_content_blocks(content_blocks)
+    content_blocks = get_formatted_content_blocks(content_blocks, description)
 
     try:
         embedding_ids = await embed_content(content_blocks, tags)
