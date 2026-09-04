@@ -1,0 +1,274 @@
+name: rag-agent
+
+services:
+    frontend-service:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: frontend-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -sf http://localhost:3000/api/health || exit 1" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        depends_on:
+            aegra-service:
+                condition: service_healthy
+            rag-api:
+                condition: service_healthy
+
+        environment:
+            - AEGRA_API_URL=http://aegra-service:2026
+            - AEGRA_ASSISTANT_ID=rag_agent
+            - JWT_SECRET=${JWT_SECRET:-super-secret-key}
+            - RAG_API_URL=http://rag-api:6060
+            - PORT=3000
+
+        ports:
+            - "3000:3000"
+
+    aegra-service:
+        build:
+            context: ./agent
+            dockerfile: Dockerfile
+        container_name: aegra-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -sf http://localhost:${PORT:-2026}/health || exit 1" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        depends_on:
+            rag-api:
+                condition: service_healthy
+            postgres-db:
+                condition: service_healthy
+            redis-db:
+                condition: service_healthy
+
+        environment:
+            - CHAT_SERVICE_URL=${CHAT_SERVICE_URL}
+            - CHAT_SERVICE_APIKEY=${CHAT_SERVICE_APIKEY}
+            - CHAT_MODEL=${CHAT_MODEL}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_HOST=postgres-db
+            - POSTGRES_DB=agent_db
+            - AEGRA_CONFIG=aegra.json
+            - AUTH_TYPE=${AUTH_TYPE:-noop}
+            - PORT=2026
+            - REDIS_BROKER_ENABLED=true
+            - REDIS_URL=redis://redis-db:6379/0
+
+        volumes:
+            - ./agent/src:/app/src:ro
+            - ./agent/aegra.json:/app/aegra.json:ro
+
+        ports:
+            - "2026:2026"
+
+    rag-api:
+        build:
+            context: ./rag_api
+            dockerfile: Dockerfile
+        container_name: rag-api
+
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:6060/health" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        depends_on:
+            embedding-service:
+                condition: service_healthy
+            reranker-service:
+                condition: service_healthy
+            chroma-db:
+                condition: service_healthy
+
+        environment:
+            EMBEDDING_SERVICE_URL: ${EMBEDDING_SERVICE_URL}
+            EMBEDDING_SERVICE_APIKEY: ${EMBEDDING_SERVICE_APIKEY}
+            EMBEDDING_MODEL: ${EMBEDDING_MODEL}
+            RERANKER_SERVICE_URL: ${RERANKER_SERVICE_URL}
+            RERANKER_SERVICE_APIKEY: ${RERANKER_SERVICE_APIKEY}
+            RERANKER_MODEL: ${RERANKER_MODEL}
+            S3_HOST: "garage-s3"
+            S3_PORT: 3900
+            AWS_ID: GK${GARAGE_DEFAULT_ACCESS_KEY}
+            AWS_SECRET: ${GARAGE_DEFAULT_SECRET_KEY}
+            CHROMA_HOST: "chroma-db"
+            CHROMA_TOKEN: ${TOKEN_CHROMA}
+
+        ports:
+            - "6060:6060"
+
+    embedding-service:
+        image: vllm/vllm-openai
+        container_name: embedding-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -f http://localhost:8001/health || exit 1" ]
+            interval: 15s
+            timeout: 20s
+            retries: 20
+            start_period: 10s
+
+        environment:
+            - HF_TOKEN=${HF_TOKEN}
+            # - HF_HUB_OFFLINE=1
+
+        volumes:
+            - ~/.cache/huggingface:/root/.cache/huggingface
+            - ./vllm_configs/dev-vllm-embedding.yml:/.config/vllm.yml
+
+        ports:
+            - "8001:8001"
+
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [ gpu ]
+
+        command: >
+            --config /.config/vllm.yml
+
+    reranker-service:
+        image: vllm/vllm-openai
+        container_name: reranker-service
+
+        healthcheck:
+            test: [ "CMD-SHELL", "curl -f http://localhost:8002/health || exit 1" ]
+            interval: 15s
+            timeout: 20s
+            retries: 20
+            start_period: 10s
+
+        depends_on:
+            embedding-service:
+                condition: service_healthy
+
+        environment:
+            - HF_TOKEN=${HF_TOKEN}
+            # - HF_HUB_OFFLINE=1
+
+        volumes:
+            - ~/.cache/huggingface:/root/.cache/huggingface
+            - ./vllm_configs/dev-vllm-reranker.yml:/.config/vllm.yml
+
+        ports:
+            - "8002:8002"
+
+        deploy:
+            resources:
+                reservations:
+                    devices:
+                        - driver: nvidia
+                          count: all
+                          capabilities: [ gpu ]
+
+        command: >
+            --config /.config/vllm.yml
+
+    redis-db:
+        image: redis:8.8-alpine
+        container_name: redis-db
+
+        healthcheck:
+            test: redis-cli ping
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        volumes:
+            - redis_data:/data
+
+        ports:
+            - "6379:6379"
+
+    postgres-db:
+        image: pgvector/pgvector:pg17
+        container_name: postgres-db
+
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        environment:
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=agent_db
+
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+        ports:
+            - "5432:5432"
+
+    garage-s3:
+        image: dxflrs/garage:v2.3.0
+        container_name: garage-s3
+
+        healthcheck:
+            test: [ "CMD", "/garage", "status" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        environment:
+            - GARAGE_DEFAULT_BUCKET=rag-bucket
+            - GARAGE_DEFAULT_ACCESS_KEY=GK${GARAGE_DEFAULT_ACCESS_KEY}
+            - GARAGE_DEFAULT_SECRET_KEY=${GARAGE_DEFAULT_SECRET_KEY}
+
+        volumes:
+            - ./garage/garage.toml:/etc/garage.toml:ro
+            - garage_metadata:/var/tmp/meta
+            - garage_data:/var/tmp/data
+
+        ports:
+            - "3900:3900"
+            - "3901:3901"
+
+        command: "/garage server --single-node --default-bucket"
+
+    chroma-db:
+        build:
+            context: ./chroma
+            dockerfile: Dockerfile
+        container_name: chroma-db
+
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:7890/api/v2/heartbeat" ]
+            interval: 5s
+            timeout: 10s
+            retries: 10
+
+        environment:
+            IS_PERSISTENT: TRUE
+            ANONYMITY_OUT_OF_SET: TRUE
+            CHROMA_SERVER_AUTH_PROVIDER: "chromadb.auth.token.TokenAuthServerProvider"
+            CHROMA_SERVER_AUTH_CREDENTIALS: ${TOKEN_CHROMA}
+            CHROMA_SERVER_AUTH_TOKEN_TRANSPORT_HEADER: "X-Chroma-Token"
+
+        volumes:
+            - chroma_data:/data
+            - ./chroma/config.yaml:/config.yaml
+
+        ports:
+            - "7890:7890"
+
+volumes:
+    postgres_data:
+    redis_data:
+    garage_metadata:
+    garage_data:
+    chroma_data:
