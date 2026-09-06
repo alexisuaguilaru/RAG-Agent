@@ -2,11 +2,9 @@ import urllib.parse
 from typing import List
 
 from fastapi import UploadFile
-from mypy_boto3_s3.type_defs import ObjectTypeDef, GetObjectOutputTypeDef
+from types_aiobotocore_s3.type_defs import ObjectTypeDef, GetObjectOutputTypeDef
 
 from rag_api.database.object_storage import get_object_storage
-
-object_storage = get_object_storage()
 
 async def upload_embed_file(
         file: UploadFile,
@@ -53,7 +51,8 @@ async def upload_embed_file(
     }
 
     try:
-        object_storage.upload_fileobj(
+        object_storage = get_object_storage()
+        await object_storage.upload_fileobj(
             file_stream,
             "rag-bucket",
             file_id,
@@ -71,8 +70,12 @@ async def gather_all_files() -> List[ObjectTypeDef]:
     Returns:
         file_objects (List[ObjectTypeDef]): List of embedded files stored in the S3 bucket
     """
-
-    return object_storage.list_objects(Bucket="rag-bucket").get("Contents", [])
+    
+    try:
+        object_storage = get_object_storage()
+        return (await object_storage.list_objects(Bucket="rag-bucket")).get("Contents", [])
+    except Exception as e:
+        raise e
 
 async def get_uploaded_file(
         file_id: str,
@@ -90,7 +93,8 @@ async def get_uploaded_file(
     """
 
     try:
-        file_object = object_storage.get_object(Bucket="rag-bucket", Key=file_id)
+        object_storage = get_object_storage()
+        file_object = await object_storage.get_object(Bucket="rag-bucket", Key=file_id)
         file_object["Key"] = file_id
         return file_object
     except Exception as e:
@@ -111,7 +115,7 @@ async def stream_file(
         data_chunk (bytes): File'chunk being streamed
     """
 
-    for data_chunk in file_object["Body"].iter_chunks(1024*1024):
+    async for data_chunk in file_object["Body"].iter_chunks(1024*1024):
         yield data_chunk
     
 async def delete_file_object(
@@ -125,7 +129,11 @@ async def delete_file_object(
         file_id (str): File's ID to delete
     """
 
-    object_storage.delete_object(Bucket="rag-bucket", Key=file_id)
+    try:
+        object_storage = get_object_storage()
+        await object_storage.delete_object(Bucket="rag-bucket", Key=file_id)
+    except Exception as e:
+        raise e
 
 def _get_file_id(
         file: UploadFile

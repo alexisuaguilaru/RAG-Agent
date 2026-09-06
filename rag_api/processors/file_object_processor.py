@@ -1,7 +1,7 @@
 import urllib.parse
 from typing import List, Any
 
-from mypy_boto3_s3.type_defs import GetObjectOutputTypeDef
+from types_aiobotocore_s3.type_defs import GetObjectOutputTypeDef
 
 from rag_api.schemas.responses import StoredEmbedFile
 

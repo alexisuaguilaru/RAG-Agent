@@ -17,4 +17,6 @@ dependencies = [
     "langchain-classic>=1.0.8",
     "langchain-cohere>=0.6.0",
     "langchain-chroma>=1.1.0",
+    "aioboto3>=7.0.0",
+    "types-aioboto3[s3]>=15.5.0",
 ]
