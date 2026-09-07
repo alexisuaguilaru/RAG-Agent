@@ -19,9 +19,8 @@ def load_chat_model() -> BaseChatModel:
         base_url = settings.CHAT_SERVICE_URL,
         api_key = settings.CHAT_SERVICE_APIKEY.get_secret_value(),
         model = MODEL_ID,
-        extra_body = {
-            "chat_template_kwargs": {"enable_thinking": False}
-        },
+        temperature = 0.1,
+        extra_body = {"reasoning": {"enabled": True}},
         timeout = None,
         stream_chunk_timeout = None,
     )
