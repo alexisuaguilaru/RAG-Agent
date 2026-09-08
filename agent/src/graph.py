@@ -1,4 +1,5 @@
 from langchain.agents import create_agent
+from langchain.agents.middleware import ToolCallLimitMiddleware
 
 from src.utils import load_chat_model , load_system_prompt
 from src.tools import TOOLS
@@ -13,4 +14,5 @@ agent = create_agent(
     state_schema = StateSchema,
     context_schema = ContextSchema,
     name = "rag_agent",
+    middleware = [ToolCallLimitMiddleware(run_limit=3)],
 )
