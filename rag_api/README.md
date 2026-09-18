@@ -1,6 +1,19 @@
 ## RAG API
 Based on a template to develop an API following clean architecture principles, this folder contains the source code to initialize and execute a FastAPI server to deploy the multimodal RAG system.
 
+### Env Vars
+* `EMBEDDING_SERVICE_URL`: URL for the endpoints of Embedding service
+* `EMBEDDING_SERVICE_APIKEY`: API key to use the endpoints of Embedding service
+* `EMBEDDING_MODEL`: ID or name for the embedding model to use
+* `DOCUMENTS_TO_RETRIEVE`: Number of documents to retrieve from ChromaDB
+* `RERANKER_SERVICE_URL`: URL for the endpoints of Reranker service
+* `RERANKER_SERVICE_APIKEY`: API key to use the endpoints of Reranker service
+* `RERANKER_MODEL`: ID or name for the reranker model to use
+* `TOP_K_DOCUMENTS`: Number of document to return after rerankering
+* `AWS_ID`: Access key or ID for Garage service
+* `AWS_SECRET`: Secret key or token to use Garage service
+* `CHROMA_TOKEN`: Token to use ChromaDB
+
 ### Endpoints
 * `GET /health`: Check if the service is healthy
 * `GET /documents`: List the embedded documents in the object storage

@@ -3,6 +3,9 @@ Based on the project bootstrapped with [`create-next-app`](https://nextjs.org/do
 
 ### Env Vars
 * `JWT_SECRET`: JWT used to authentication and login users
+* `AEGRA_API_URL`: URL for the endpoints of Aegra service
+* `AEGRA_ASSISTANT_ID`: ID of the RAG agent
+* `RAG_API_URL`: URL for the endpoints of RAG service
 
 ## Customization
 * Change the colors of light and dark theme to modify them on [theme.config.ts](./src/config/theme.config.ts)

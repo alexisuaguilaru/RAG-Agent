@@ -20,9 +20,9 @@ services:
                 condition: service_healthy
 
         environment:
+            - JWT_SECRET=${JWT_SECRET:-super-secret-key}
             - AEGRA_API_URL=http://aegra-service:2026
             - AEGRA_ASSISTANT_ID=rag_agent
-            - JWT_SECRET=${JWT_SECRET:-super-secret-key}
             - RAG_API_URL=http://rag-api:6060
             - PORT=3000
 
