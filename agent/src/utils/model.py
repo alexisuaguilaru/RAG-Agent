@@ -23,7 +23,7 @@ def load_chat_model() -> BaseChatModel:
         extra_body = {"reasoning": {"enabled": True}},
         timeout = None,
         stream_chunk_timeout = None,
-        max_tokens = 16384,
+        max_tokens = settings.MAX_CHAT_CONTEXT_LENGHT,
     )
 
     return chat_model
