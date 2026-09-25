@@ -14,14 +14,6 @@ Based on a template to develop an API following clean architecture principles, t
 * `AWS_SECRET`: Secret key or token to use Garage service
 * `CHROMA_TOKEN`: Token to use ChromaDB
 
-### Endpoints
-* `GET /health`: Check if the service is healthy
-* `GET /documents`: List the embedded documents in the object storage
-* `GET /documents/{file_id}`: Get a specific embedded file to view 
-* `POST /documents/create-embed`: Add a file to store it in the vector database as an embedding vector, and return a list of IDs of each vector added
-* `DELETE /documents/delete-embed`: Delete a list of embedding IDs (can be associated to different files) from the vector database
-* `POST /query/search`: Search, rerank, and return similar documents/files based on the user's query
-
 ### Technical Aspects
 The RAG uses the Cohere client to request the embedding and reranker models served by vLLM. This allows building a native multimodal RAG using ChromaDB as the vector store. 
 

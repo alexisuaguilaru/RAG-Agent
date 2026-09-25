@@ -7,6 +7,7 @@ This component is highly customizable to meet your requirements. In general, the
 * `CHAT_SERVICE_URL`: URL for the endpoints of Chat service
 * `CHAT_SERVICE_APIKEY`: API key to use the endpoints of Chat service
 * `CHAT_MODEL`: ID or name for the chat model to use
+* `MAX_CHAT_CONTEXT_LENGHT`: Max context of a thread
 * `POSTGRES_USER`: User for connecting to the DB
 * `POSTGRES_PASSWORD`: Password to validate the user in the DB
 * `AUTH_TYPE`: [Authentication method](https://docs.aegra.dev/guides/authentication)
@@ -20,4 +21,4 @@ To change how the agent behaves and what metadata it has access to, modify the c
 3. Add the new tool function to the `TOOLS` constant in [\_\_init\_\_.py](./src/tools/__init__.py) 
 
 ### Modify System Prompt
-1. Modify the return of `load_system_prompt` in [prompt.py](./src/utils/prompt.py)
+1. Modify the return of `init_system_prompt` in [prompt.py](./src/utils/prompt.py) using the values of the runtime context.
