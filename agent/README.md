@@ -22,3 +22,6 @@ To change how the agent behaves and what metadata it has access to, modify the c
 
 ### Modify System Prompt
 1. Modify the return of `init_system_prompt` in [prompt.py](./src/utils/prompt.py) using the values of the runtime context.
+
+### Retriever Tool
+To use the filter based on tags/keywords during the retriever tool invocation, initialize or continue a thread with a `tags` field in its context as a list of values.

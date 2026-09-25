@@ -2,13 +2,16 @@ import requests
 import json
 from typing import List, Dict
 
-from langchain_core.tools import tool
+from langchain.tools import tool, ToolRuntime
 from langchain_core.messages.content import ContentBlock
 
 RAG_SERVICE_URL = "http://rag-api:6060/query/search"
 
 @tool
-def retriever_rag_tool(query: str) -> List[Dict]:
+def retriever_rag_tool(
+        query: str,
+        runtime: ToolRuntime,
+    ) -> List[Dict]:
     """
     Retrieve information (text plain and image with content) 
     from the knowledge database to answer the user's question.
@@ -17,10 +20,14 @@ def retriever_rag_tool(query: str) -> List[Dict]:
         query (str): User's query rewrite to be specific and concise
     """
 
+    tags = runtime.context.tags
     try:
         response_retriever = requests.post(
             RAG_SERVICE_URL,
-            json = {"query": query},
+            json = {
+                "query": query,
+                "tags": tags,
+            },
         )
         if response_retriever.status_code != 200: raise 
 
