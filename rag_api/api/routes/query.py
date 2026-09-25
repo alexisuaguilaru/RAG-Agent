@@ -21,7 +21,8 @@ async def search_documents(
     Search and retrieve relevant documents and files in the vector 
     database based on the user's query. To retrieve the documents 
     use a contextual compression retriever to reduce and filter the 
-    relevant documents using a reranker.The query is not preprocessed 
+    relevant documents using a filter based on a list of tags 
+    and a reranker (semantic filter).The query is not preprocessed 
     before invoke the contextual retriever.
 
     Args:
@@ -35,6 +36,6 @@ async def search_documents(
     """
 
     try:
-        return await retrieve_documents(search_query.query)
+        return await retrieve_documents(search_query.query, search_query.tags)
     except Exception as e:
         return [Document(json.dumps([{"type": "text", "text": "Internal fail to retrieve documents."}]))]
